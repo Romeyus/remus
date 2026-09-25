@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Err, Map, Ok
+from remus import Err, Map, Nothing, Ok, Some
 
 
 @pytest.fixture
@@ -12,6 +12,13 @@ def map() -> Map[int, str]:
             2: "two",
         }
     )
+
+
+def test_get(map: Map[int, str]) -> None:
+    assert map.get(0) == Some("zero")
+    assert map.get(1) == Some("one")
+    assert map.get(2) == Some("two")
+    assert map.get(3) == Nothing
 
 
 def test__getitem__(map: Map[int, str]) -> None:

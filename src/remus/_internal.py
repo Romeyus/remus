@@ -350,6 +350,10 @@ class Panic(BaseException):
 class Map[K, T]:
     data: Mapping[K, T]
 
+    def get(self, key: K) -> Maybe[T]:
+        """Returns `Some` if `key` in `self`, else returns `Nothing`."""
+        return self[key].ok()
+
     def __getitem__(self, key: K) -> Result[T, KeyError]:
         try:
             return Ok(self.data[key])
