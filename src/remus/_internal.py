@@ -150,6 +150,10 @@ class _BaseMaybe[T](ABC):
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         """Returns `maybe` if `self` is `Nothing`, else returns `self`."""
 
+    @abstractmethod
+    def unwrap(self) -> T:
+        """Returns `self.value` if `self` is `Some`, else raises `Panic`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -164,6 +168,9 @@ class Some[T](_BaseMaybe[T]):
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return cast(Maybe[U], self)
 
+    def unwrap(self) -> T:
+        return self.value
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -177,6 +184,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return maybe
+
+    def unwrap(self) -> T:
+        raise Panic("called Maybe.unwrap() on Nothing")
 
 
 Nothing = NothingType()

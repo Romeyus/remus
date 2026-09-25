@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Err, Nothing, Ok, Some
+from remus import Err, Nothing, Ok, Panic, Some
 
 
 @pytest.fixture
@@ -33,3 +33,9 @@ def test_or_(some: Some[int]) -> None:
 
     assert Nothing.or_(some_maybe) == some_maybe
     assert Nothing.or_(Nothing) == Nothing
+
+
+def test_unwrap(some: Some[int]) -> None:
+    assert some.unwrap() == 1
+    with pytest.raises(Panic):
+        Nothing.unwrap()
