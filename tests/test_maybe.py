@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Nothing, Some
+from remus import Err, Nothing, Ok, Some
 
 
 @pytest.fixture
@@ -16,6 +16,13 @@ def test_and_(some: Some[int]) -> None:
 
     assert Nothing.and_(some_maybe) == Nothing
     assert Nothing.and_(Nothing) == Nothing
+
+
+def test_ok_or(some: Some[int]) -> None:
+    err_value = "something went wrong"
+
+    assert some.ok_or(err_value) == Ok(1)
+    assert Nothing.ok_or(err_value) == Err(err_value)
 
 
 def test_or_(some: Some[int]) -> None:
