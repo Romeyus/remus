@@ -95,3 +95,11 @@ def test_unwrap_err(ok: Ok[int], err: Err[str]) -> None:
 def test_unwrap_or(ok: Ok[int], err: Err[str]) -> None:
     assert ok.unwrap_or(2) == 1
     assert err.unwrap_or(2) == 2
+
+
+def test_unwrap_or_else(ok: Ok[int], err: Err[str]) -> None:
+    def func(value: str) -> int:
+        return 2
+
+    assert ok.unwrap_or_else(func) == 1
+    assert err.unwrap_or_else(func) == 2

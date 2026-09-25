@@ -54,6 +54,10 @@ class _BaseResult[T, E](ABC):
     def unwrap_or(self, default: T) -> T:
         """Returns `self.value` if `self` is `Ok`, else returns `default`."""
 
+    @abstractmethod
+    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
+        """Returns `self.value` if `self` is `Ok`, else returns result of `func`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Ok[T, E = Any](_BaseResult[T, E]):
@@ -90,6 +94,9 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         raise Panic(f"called Result.unwrap_err() on Ok value: {self.value}")
 
     def unwrap_or(self, default: T) -> T:
+        return self.value
+
+    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
         return self.value
 
 
@@ -129,6 +136,9 @@ class Err[E, T = Any](_BaseResult[T, E]):
 
     def unwrap_or(self, default: T) -> T:
         return default
+
+    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
+        return func(self.value)
 
 
 # ==========================================
