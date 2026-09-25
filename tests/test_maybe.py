@@ -85,6 +85,14 @@ def test_ok_or(some: Some[int]) -> None:
     assert Nothing.ok_or(err_value) == Err(err_value)
 
 
+def test_ok_or_else(some: Some[int]) -> None:
+    def func() -> str:
+        return "something went wrong"
+
+    assert some.ok_or_else(func) == Ok(1)
+    assert Nothing.ok_or_else(func) == Err("something went wrong")
+
+
 def test_or_(some: Some[int]) -> None:
     some_maybe = Some(2)
 

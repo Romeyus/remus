@@ -213,6 +213,10 @@ class _BaseMaybe[T](ABC):
         """Returns `Ok` with `self.value` if `self` is `Some`, else returns `Err` with `err`."""
 
     @abstractmethod
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        """Returns `Ok` with `self.value` if `self` is `Some`, else returns `Err` with result of `func`."""
+
+    @abstractmethod
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         """Returns `maybe` if `self` is `Nothing`, else returns `self`."""
 
@@ -258,6 +262,9 @@ class Some[T](_BaseMaybe[T]):
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Ok(self.value)
 
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        return Ok(self.value)
+
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return cast(Maybe[U], self)
 
@@ -298,6 +305,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Err(err)
+
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        return Err(func())
 
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return maybe
