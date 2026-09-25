@@ -42,5 +42,12 @@ def test__getitem__(map: Map[int, str]) -> None:
     assert isinstance(map[3], Err) and isinstance(map[3].value, KeyError)
 
 
+def test__iter__(map: Map[int, str]) -> None:
+    for i in map:
+        assert i in [0, 1, 2]
+
+    assert 3 not in map
+
+
 def test__len__(map: Map[int, str]) -> None:
     assert len(map) == 3

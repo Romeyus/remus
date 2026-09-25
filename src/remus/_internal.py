@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -367,6 +367,9 @@ class Map[K, T]:
 
         except KeyError as e:
             return Err(e)
+
+    def __iter__(self) -> Iterator[K]:
+        return iter(self.data)
 
     def __len__(self) -> int:
         return len(self.data)
