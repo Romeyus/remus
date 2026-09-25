@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Err, Ok, Panic
+from remus import Err, Nothing, Ok, Panic, Some
 
 
 @pytest.fixture
@@ -54,6 +54,11 @@ def test_map_or(ok: Ok[int], err: Err[str]) -> None:
 
     assert ok.map_or(func, 0) == 2
     assert err.map_or(func, 0) == 0
+
+
+def test_ok(ok: Ok[int], err: Err[str]) -> None:
+    assert ok.ok() == Some(1)
+    assert err.ok() == Nothing
 
 
 def test_or_(ok: Ok[int], err: Err[str]) -> None:
