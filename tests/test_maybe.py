@@ -54,6 +54,14 @@ def test_inspect(some: Some[int]) -> None:
     func.assert_not_called()
 
 
+def test_map(some: Some[int]) -> None:
+    def func(value: int) -> int:
+        return value * 2
+
+    assert some.map(func) == Some(2)
+    assert Nothing.map(func) == Nothing
+
+
 def test_ok_or(some: Some[int]) -> None:
     err_value = "something went wrong"
 
