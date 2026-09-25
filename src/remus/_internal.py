@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, Mapping
+from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, ValuesView
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -357,6 +357,15 @@ class Map[K, T]:
     def get_or(self, key: K, default: T) -> T:
         """Returns value of type `T` if `key` in `self`, else returns `default`."""
         return self[key].unwrap_or(default)
+
+    def items(self) -> ItemsView[K, T]:
+        return self.data.items()
+
+    def keys(self) -> KeysView[K]:
+        return self.data.keys()
+
+    def values(self) -> ValuesView[T]:
+        return self.data.values()
 
     def __contains__(self, key: K) -> bool:
         return key in self.data

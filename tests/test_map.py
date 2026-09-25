@@ -28,6 +28,18 @@ def test_get_or(map: Map[int, str]) -> None:
     assert map.get_or(3, "default") == "default"
 
 
+def test_items(map: Map[int, str]) -> None:
+    assert list(map.items()) == [(0, "zero"), (1, "one"), (2, "two")]
+
+
+def test_keys(map: Map[int, str]) -> None:
+    assert list(map.keys()) == [0, 1, 2]
+
+
+def test_values(map: Map[int, str]) -> None:
+    assert list(map.values()) == ["zero", "one", "two"]
+
+
 def test__contains__(map: Map[int, str]) -> None:
     assert 0 in map
     assert 1 in map
