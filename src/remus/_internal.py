@@ -358,6 +358,9 @@ class Map[K, T]:
         """Returns value of type `T` if `key` in `self`, else returns `default`."""
         return self[key].unwrap_or(default)
 
+    def __contains__(self, key: K) -> bool:
+        return key in self.data
+
     def __getitem__(self, key: K) -> Result[T, KeyError]:
         try:
             return Ok(self.data[key])

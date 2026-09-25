@@ -28,6 +28,13 @@ def test_get_or(map: Map[int, str]) -> None:
     assert map.get_or(3, "default") == "default"
 
 
+def test__contains__(map: Map[int, str]) -> None:
+    assert 0 in map
+    assert 1 in map
+    assert 2 in map
+    assert 3 not in map
+
+
 def test__getitem__(map: Map[int, str]) -> None:
     assert map[0] == Ok("zero")
     assert map[1] == Ok("one")
