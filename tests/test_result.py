@@ -40,6 +40,14 @@ def test_map(ok: Ok[int], err: Err[str]) -> None:
     assert err.map(func) == err
 
 
+def test_map_err(ok: Ok[int], err: Err[str]) -> None:
+    def func(value: str) -> str:
+        return value.upper()
+
+    assert ok.map_err(func) == ok
+    assert err.map_err(func) == Err("SOMETHING WENT WRONG")
+
+
 def test_map_or(ok: Ok[int], err: Err[str]) -> None:
     def func(value: int) -> int:
         return value + 1
