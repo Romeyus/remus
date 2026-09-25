@@ -18,6 +18,14 @@ def test_and_(some: Some[int]) -> None:
     assert Nothing.and_(Nothing) == Nothing
 
 
+def test_and_then(some: Some[int]) -> None:
+    def func(value: int) -> Some[int]:
+        return Some(value + 1)
+
+    assert some.and_then(func) == Some(2)
+    assert Nothing.and_then(func) == Nothing
+
+
 def test_ok_or(some: Some[int]) -> None:
     err_value = "something went wrong"
 

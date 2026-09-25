@@ -182,7 +182,11 @@ type Maybe[T] = Some[T] | NothingType[T]
 class _BaseMaybe[T](ABC):
     @abstractmethod
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
-        """Returns `maybe` if `self` is `Some`, else returns `self`."""
+        """Returns `maybe` if `self` is `Some`, else returns `Nothing`."""
+
+    @abstractmethod
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        """Returns result of `func` if `self` is `Some`, else returns `Nothing`."""
 
     @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
@@ -208,6 +212,9 @@ class Some[T](_BaseMaybe[T]):
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return maybe
 
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        return func(self.value)
+
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Ok(self.value)
 
@@ -226,6 +233,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
     value: None = field(default=None, init=False)
 
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return cast(Maybe[U], self)
+
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
         return cast(Maybe[U], self)
 
     def ok_or[E](self, err: E) -> Result[T, E]:
