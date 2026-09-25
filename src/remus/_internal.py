@@ -23,6 +23,10 @@ class _BaseResult[T, E](ABC):
         """Calls `func` on `self.value` if `self` is `Ok`, else does nothing. Returns `self`."""
 
     @abstractmethod
+    def inspect_err(self, func: Callable[[E], Any]) -> Result[T, E]:
+        """Calls `func` on `self.value` if `self` is `Err`, else does nothing. Returns `self`."""
+
+    @abstractmethod
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
         """Returns `Ok` with result of `func` if `self` is `Ok`, else returns `self`."""
 
@@ -81,6 +85,9 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         func(self.value)
         return self
 
+    def inspect_err(self, func: Callable[[E], Any]) -> Result[T, E]:
+        return self
+
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
         return Ok(func(self.value))
 
@@ -126,6 +133,10 @@ class Err[E, T = Any](_BaseResult[T, E]):
         return cast(Result[U, E], self)
 
     def inspect(self, func: Callable[[T], Any]) -> Result[T, E]:
+        return self
+
+    def inspect_err(self, func: Callable[[E], Any]) -> Result[T, E]:
+        func(self.value)
         return self
 
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:

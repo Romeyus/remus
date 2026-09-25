@@ -46,6 +46,18 @@ def test_inspect(ok: Ok[int], err: Err[str]) -> None:
     func.assert_not_called()
 
 
+def test_inspect_err(ok: Ok[int], err: Err[str]) -> None:
+    func = mock.Mock()
+
+    ok.inspect_err(func)
+    func.assert_not_called()
+
+    func.reset_mock()
+
+    err.inspect_err(func)
+    func.assert_called_once_with("something went wrong")
+
+
 def test_map(ok: Ok[int], err: Err[str]) -> None:
     def func(value: int) -> int:
         return value + 1
