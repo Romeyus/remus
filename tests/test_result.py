@@ -37,24 +37,24 @@ def test_and_then(ok: Ok[int], err: Err[str]) -> None:
 def test_inspect(ok: Ok[int], err: Err[str]) -> None:
     func = mock.Mock()
 
-    ok.inspect(func)
+    assert ok.inspect(func) == ok
     func.assert_called_once_with(1)
 
     func.reset_mock()
 
-    err.inspect(func)
+    assert err.inspect(func) == err
     func.assert_not_called()
 
 
 def test_inspect_err(ok: Ok[int], err: Err[str]) -> None:
     func = mock.Mock()
 
-    ok.inspect_err(func)
+    assert ok.inspect_err(func) == ok
     func.assert_not_called()
 
     func.reset_mock()
 
-    err.inspect_err(func)
+    assert err.inspect_err(func) == err
     func.assert_called_once_with("something went wrong")
 
 

@@ -193,6 +193,10 @@ class _BaseMaybe[T](ABC):
         """Returns `self` if `self` is `Some` and result of `predicate` is `True`, else returns `Nothing`."""
 
     @abstractmethod
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        """Calls `func` on `self.value` if `self` is `Some`, else does nothing. Returns `self`."""
+
+    @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Returns `Ok` with `self.value` if `self` is `Some`, else returns `Err` with `err`."""
 
@@ -226,6 +230,10 @@ class Some[T](_BaseMaybe[T]):
     def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
         return self if predicate(self.value) else Nothing
 
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        func(self.value)
+        return self
+
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Ok(self.value)
 
@@ -253,6 +261,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
         return Nothing
 
     def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return Nothing
+
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
         return Nothing
 
     def ok_or[E](self, err: E) -> Result[T, E]:

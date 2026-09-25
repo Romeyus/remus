@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from remus import Err, Nothing, Ok, Panic, Some
@@ -38,6 +40,18 @@ def test_filter(some: Some[int]) -> None:
 
     assert some.filter(is_odd) == some
     assert Nothing.filter(is_odd) == Nothing
+
+
+def test_inspect(some: Some[int]) -> None:
+    func = mock.Mock()
+
+    assert some.inspect(func) == some
+    func.assert_called_once_with(1)
+
+    func.reset_mock()
+
+    assert Nothing.inspect(func) == Nothing
+    func.assert_not_called()
 
 
 def test_ok_or(some: Some[int]) -> None:
