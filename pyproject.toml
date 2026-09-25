@@ -26,5 +26,9 @@ ignore = ["**/__pycache__"]
 
 [tool.pytest]
 pythonpath = ["src"]
-addopts = ["--import-mode=importlib", "--cov=src/remus"]
+addopts = [
+    "--import-mode=importlib",
+    "--cov=src/remus",
+    "--cov-report=term-missing",
+]
 strict = true

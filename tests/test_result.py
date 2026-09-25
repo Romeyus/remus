@@ -32,6 +32,14 @@ def test_and_then(ok: Ok[int], err: Err[str]) -> None:
     assert err.and_then(func) == err
 
 
+def test_map(ok: Ok[int], err: Err[str]) -> None:
+    def func(value: int) -> int:
+        return value + 1
+
+    assert ok.map(func) == Ok(2)
+    assert err.map(func) == err
+
+
 def test_or_(ok: Ok[int], err: Err[str]) -> None:
     ok_res = Ok(2)
     err_res = Err("something else went wrong")
