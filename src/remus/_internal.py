@@ -197,6 +197,10 @@ class _BaseMaybe[T](ABC):
         """Returns `maybe` if `self` is `Nothing`, else returns `self`."""
 
     @abstractmethod
+    def or_else[U](self, func: Callable[[], Maybe[U]]) -> Maybe[U]:
+        """Returns result of `func` if `self` is `Nothing`, else returns `self`."""
+
+    @abstractmethod
     def unwrap(self) -> T:
         """Returns `self.value` if `self` is `Some`, else raises `Panic`."""
 
@@ -221,6 +225,9 @@ class Some[T](_BaseMaybe[T]):
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return cast(Maybe[U], self)
 
+    def or_else[U](self, func: Callable[[], Maybe[U]]) -> Maybe[U]:
+        return cast(Maybe[U], self)
+
     def unwrap(self) -> T:
         return self.value
 
@@ -243,6 +250,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return maybe
+
+    def or_else[U](self, func: Callable[[], Maybe[U]]) -> Maybe[U]:
+        return func()
 
     def unwrap(self) -> T:
         raise Panic("called Maybe.unwrap() on Nothing")

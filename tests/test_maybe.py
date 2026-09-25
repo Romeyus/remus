@@ -43,6 +43,14 @@ def test_or_(some: Some[int]) -> None:
     assert Nothing.or_(Nothing) == Nothing
 
 
+def test_or_else(some: Some[int]) -> None:
+    def func() -> Some[int]:
+        return Some(2)
+
+    assert some.or_else(func) == some
+    assert Nothing.or_else(func) == Some(2)
+
+
 def test_unwrap(some: Some[int]) -> None:
     assert some.unwrap() == 1
     with pytest.raises(Panic):
