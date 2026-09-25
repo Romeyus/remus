@@ -56,6 +56,14 @@ def test_map_or(ok: Ok[int], err: Err[str]) -> None:
     assert err.map_or(func, 0) == 0
 
 
+def test_map_or_else(ok: Ok[int], err: Err[str]) -> None:
+    def func(value: int) -> int:
+        return value + 1
+
+    assert ok.map_or_else(func, lambda _: 0) == 2
+    assert err.map_or_else(func, lambda _: 0) == 0
+
+
 def test_ok(ok: Ok[int], err: Err[str]) -> None:
     assert ok.ok() == Some(1)
     assert err.ok() == Nothing
