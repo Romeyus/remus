@@ -189,6 +189,10 @@ class _BaseMaybe[T](ABC):
         """Returns result of `func` if `self` is `Some`, else returns `Nothing`."""
 
     @abstractmethod
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        """Returns `self` if `self` is `Some` and result of `predicate` is `True`, else returns `Nothing`."""
+
+    @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Returns `Ok` with `self.value` if `self` is `Some`, else returns `Err` with `err`."""
 
@@ -219,6 +223,9 @@ class Some[T](_BaseMaybe[T]):
     def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
         return func(self.value)
 
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return self if predicate(self.value) else Nothing
+
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Ok(self.value)
 
@@ -240,10 +247,13 @@ class NothingType[T = Any](_BaseMaybe[T]):
     value: None = field(default=None, init=False)
 
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
-        return cast(Maybe[U], self)
+        return Nothing
 
     def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
-        return cast(Maybe[U], self)
+        return Nothing
+
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return Nothing
 
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Err(err)

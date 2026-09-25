@@ -26,6 +26,20 @@ def test_and_then(some: Some[int]) -> None:
     assert Nothing.and_then(func) == Nothing
 
 
+def test_filter(some: Some[int]) -> None:
+    def is_even(value: int) -> bool:
+        return value % 2 == 0
+
+    def is_odd(value: int) -> bool:
+        return not is_even(value)
+
+    assert some.filter(is_even) == Nothing
+    assert Nothing.filter(is_even) == Nothing
+
+    assert some.filter(is_odd) == some
+    assert Nothing.filter(is_odd) == Nothing
+
+
 def test_ok_or(some: Some[int]) -> None:
     err_value = "something went wrong"
 
