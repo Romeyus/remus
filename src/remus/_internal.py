@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -341,3 +341,11 @@ Nothing = NothingType()
 @dataclass(frozen=True, slots=True)
 class Panic(BaseException):
     message: str
+
+
+# ==========================================
+# ===            Map                 ===
+# ==========================================
+@dataclass(frozen=True, slots=True)
+class Map[K, T]:
+    data: Mapping[K, T]
