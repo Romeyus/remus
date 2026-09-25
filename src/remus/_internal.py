@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, cast
 
 # ==========================================
@@ -79,6 +79,25 @@ class Err[E, T = Any](_BaseResult[T, E]):
 
     def unwrap_or(self, default: T) -> T:
         return default
+
+
+# ==========================================
+# ===            Maybe                 ===
+# ==========================================
+type Maybe[T] = Some[T] | Nothing[T]
+
+
+class _BaseMaybe[T](ABC): ...
+
+
+@dataclass(frozen=True, slots=True)
+class Some[T](_BaseMaybe[T]):
+    value: T
+
+
+@dataclass(frozen=True, slots=True)
+class Nothing[T = Any](_BaseMaybe[T]):
+    value: None = field(default=None, init=False)
 
 
 # ==========================================
