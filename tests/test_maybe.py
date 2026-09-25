@@ -120,3 +120,11 @@ def test_unwrap(some: Some[int]) -> None:
 def test_unwrap_or(some: Some[int]) -> None:
     assert some.unwrap_or(2) == 1
     assert Nothing.unwrap_or(2) == 2
+
+
+def test_unwrap_or_else(some: Some[int]) -> None:
+    def func() -> int:
+        return 2
+
+    assert some.unwrap_or_else(func) == 1
+    assert Nothing.unwrap_or_else(func) == 2

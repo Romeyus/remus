@@ -232,6 +232,10 @@ class _BaseMaybe[T](ABC):
     def unwrap_or(self, default: T) -> T:
         """Returns `self.value` if `self` is `Some`, else returns `default`."""
 
+    @abstractmethod
+    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+        """Returns `self.value` if `self` is `Some`, else returns result of `func`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -277,6 +281,9 @@ class Some[T](_BaseMaybe[T]):
     def unwrap_or(self, default: T) -> T:
         return self.value
 
+    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+        return self.value
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -320,6 +327,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     def unwrap_or(self, default: T) -> T:
         return default
+
+    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+        return func()
 
 
 Nothing = NothingType()
