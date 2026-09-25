@@ -396,5 +396,8 @@ class Map[K, T]:
 class MutMap[K, T](Map[K, T]):
     data: MutableMapping[K, T] = field(default_factory=dict[K, T])
 
+    def setdefault(self, key: K, default: T) -> T:
+        return self.data.setdefault(key, default)
+
     def __setitem__(self, key: K, value: T) -> None:
         self.data[key] = value

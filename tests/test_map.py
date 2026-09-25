@@ -76,6 +76,17 @@ def mut_map() -> MutMap[int, str]:
     )
 
 
+def test_setdefault(mut_map: MutMap[int, str]) -> None:
+    assert mut_map.setdefault(0, "another zero") == "zero"
+    assert mut_map[0] == Ok("zero")
+
+    assert mut_map.setdefault(3, "three") == "three"
+    assert mut_map[3] == Ok("three")
+
+
 def test__setitem__(mut_map: MutMap[int, str]):
+    mut_map[0] = "another zero"
+    assert mut_map[0] == Ok("another zero")
+
     mut_map[3] = "three"
     assert mut_map[3] == Ok("three")
