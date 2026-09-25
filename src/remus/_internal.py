@@ -1,5 +1,13 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, ItemsView, Iterator, KeysView, Mapping, ValuesView
+from collections.abc import (
+    Callable,
+    ItemsView,
+    Iterator,
+    KeysView,
+    Mapping,
+    MutableMapping,
+    ValuesView,
+)
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -382,3 +390,7 @@ class Map[K, T]:
 
     def __len__(self) -> int:
         return len(self.data)
+
+
+class MutMap[K, T](Map[K, T]):
+    data: MutableMapping[K, T] = field(default_factory=dict[K, T])
