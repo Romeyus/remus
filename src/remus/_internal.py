@@ -142,6 +142,10 @@ class _BaseMaybe[T](ABC):
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         """Returns `maybe` if `self` is `Some`, else returns `self`."""
 
+    @abstractmethod
+    def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        """Returns `maybe` if `self` is `Nothing`, else returns `self`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -150,6 +154,9 @@ class Some[T](_BaseMaybe[T]):
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return maybe
 
+    def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return cast(Maybe[U], self)
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -157,6 +164,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return cast(Maybe[U], self)
+
+    def or_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return maybe
 
 
 Nothing = NothingType()

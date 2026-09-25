@@ -16,3 +16,13 @@ def test_and_(some: Some[int]) -> None:
 
     assert Nothing.and_(some_maybe) == Nothing
     assert Nothing.and_(Nothing) == Nothing
+
+
+def test_or_(some: Some[int]) -> None:
+    some_maybe = Some(2)
+
+    assert some.or_(some_maybe) == some
+    assert some.or_(Nothing) == some
+
+    assert Nothing.or_(some_maybe) == some_maybe
+    assert Nothing.or_(Nothing) == Nothing
