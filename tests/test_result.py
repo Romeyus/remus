@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Err, Ok
+from remus import Err, Ok, Panic
 
 
 @pytest.fixture
@@ -32,9 +32,26 @@ def test_and_then(ok: Ok[int], err: Err[str]) -> None:
     assert err.and_then(func) == err
 
 
+def test_or_(ok: Ok[int], err: Err[str]) -> None:
+    ok_res = Ok(2)
+    err_res = Err("something else went wrong")
+
+    assert ok.or_(ok_res) == ok
+    assert ok.or_(err_res) == ok
+
+    assert err.or_(ok_res) == ok_res
+    assert err.or_(err_res) == err_res
+
+
 def test_or_else(ok: Ok[int], err: Err[str]) -> None:
     def func(value: str) -> Err[str]:
         return Err("something else went wrong")
 
     assert ok.or_else(func) == ok
     assert err.or_else(func) == Err("something else went wrong")
+
+
+def test_unwrap(ok: Ok[int], err: Err[str]) -> None:
+    assert ok.unwrap() == 1
+    with pytest.raises(Panic):
+        err.unwrap()

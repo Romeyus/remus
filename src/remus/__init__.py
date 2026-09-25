@@ -1,3 +1,3 @@
-from remus._internal import Err, Ok, Result
+from remus._internal import Err, Ok, Panic, Result
 
-__all__ = ("Err", "Ok", "Result")
+__all__ = ("Err", "Ok", "Panic", "Result")
