@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from remus import Err, Nothing, Ok, Panic, Some
@@ -30,6 +32,18 @@ def test_and_then(ok: Ok[int], err: Err[str]) -> None:
 
     assert ok.and_then(func) == Ok(2)
     assert err.and_then(func) == err
+
+
+def test_inspect(ok: Ok[int], err: Err[str]) -> None:
+    func = mock.Mock()
+
+    ok.inspect(func)
+    func.assert_called_once_with(1)
+
+    func.reset_mock()
+
+    err.inspect(func)
+    func.assert_not_called()
 
 
 def test_map(ok: Ok[int], err: Err[str]) -> None:
