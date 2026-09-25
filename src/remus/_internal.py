@@ -349,3 +349,10 @@ class Panic(BaseException):
 @dataclass(frozen=True, slots=True)
 class Map[K, T]:
     data: Mapping[K, T]
+
+    def __getitem__(self, key: K) -> Result[T, KeyError]:
+        try:
+            return Ok(self.data[key])
+
+        except KeyError as e:
+            return Err(e)
