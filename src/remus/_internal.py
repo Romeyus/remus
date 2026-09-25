@@ -84,20 +84,32 @@ class Err[E, T = Any](_BaseResult[T, E]):
 # ==========================================
 # ===            Maybe                 ===
 # ==========================================
-type Maybe[T] = Some[T] | Nothing[T]
+type Maybe[T] = Some[T] | NothingType[T]
 
 
-class _BaseMaybe[T](ABC): ...
+class _BaseMaybe[T](ABC):
+    @abstractmethod
+    def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        """Returns `maybe` if `self` is `Some`, else returns `self`."""
 
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
     value: T
 
+    def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return maybe
+
 
 @dataclass(frozen=True, slots=True)
-class Nothing[T = Any](_BaseMaybe[T]):
+class NothingType[T = Any](_BaseMaybe[T]):
     value: None = field(default=None, init=False)
+
+    def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return cast(Maybe[U], self)
+
+
+Nothing = NothingType()
 
 
 # ==========================================
