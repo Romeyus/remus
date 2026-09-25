@@ -73,6 +73,12 @@ def test_unwrap(ok: Ok[int], err: Err[str]) -> None:
         err.unwrap()
 
 
+def test_unwrap_err(ok: Ok[int], err: Err[str]) -> None:
+    with pytest.raises(Panic):
+        ok.unwrap_err()
+    assert err.unwrap_err() == "something went wrong"
+
+
 def test_unwrap_or(ok: Ok[int], err: Err[str]) -> None:
     assert ok.unwrap_or(2) == 1
     assert err.unwrap_or(2) == 2

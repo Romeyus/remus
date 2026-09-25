@@ -39,6 +39,10 @@ class _BaseResult[T, E](ABC):
         """Returns `self.value` if `self` is `Ok`, else raises `Panic`."""
 
     @abstractmethod
+    def unwrap_err(self) -> E:
+        """Returns `self.value` if `self` is `Err`, else raises `Panic`."""
+
+    @abstractmethod
     def unwrap_or(self, default: T) -> T:
         """Returns `self.value` if `self` is `Ok`, else returns `default`."""
 
@@ -68,6 +72,9 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def unwrap(self) -> T:
         return self.value
 
+    def unwrap_err(self) -> E:
+        raise Panic(f"called Result.unwrap_err() on Ok value: {self.value}")
+
     def unwrap_or(self, default: T) -> T:
         return self.value
 
@@ -96,6 +103,9 @@ class Err[E, T = Any](_BaseResult[T, E]):
 
     def unwrap(self) -> T:
         raise Panic(f"called Result.unwrap() on Err value: {self.value}")
+
+    def unwrap_err(self) -> E:
+        return self.value
 
     def unwrap_or(self, default: T) -> T:
         return default
