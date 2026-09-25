@@ -364,3 +364,6 @@ class Map[K, T]:
 
         except KeyError as e:
             return Err(e)
+
+    def __len__(self) -> int:
+        return len(self.data)

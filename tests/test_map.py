@@ -33,3 +33,7 @@ def test__getitem__(map: Map[int, str]) -> None:
     assert map[1] == Ok("one")
     assert map[2] == Ok("two")
     assert isinstance(map[3], Err) and isinstance(map[3].value, KeyError)
+
+
+def test__len__(map: Map[int, str]) -> None:
+    assert len(map) == 3
