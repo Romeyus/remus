@@ -351,8 +351,12 @@ class Map[K, T]:
     data: Mapping[K, T]
 
     def get(self, key: K) -> Maybe[T]:
-        """Returns `Some` if `key` in `self`, else returns `Nothing`."""
+        """Returns `Some` with value of type `T` if `key` in `self`, else returns `Nothing`."""
         return self[key].ok()
+
+    def get_or(self, key: K, default: T) -> T:
+        """Returns value of type `T` if `key` in `self`, else returns `default`."""
+        return self[key].unwrap_or(default)
 
     def __getitem__(self, key: K) -> Result[T, KeyError]:
         try:
