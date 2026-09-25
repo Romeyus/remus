@@ -23,6 +23,10 @@ class _BaseResult[T, E](ABC):
         """Returns `Ok` with result of `func` if `self` is `Ok`, else returns `self`."""
 
     @abstractmethod
+    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+        """Returns result of `func` if `self` is `Ok`, else returns `default`."""
+
+    @abstractmethod
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
         """Returns `result` if `self` is `Err`, else returns `self`."""
 
@@ -52,6 +56,9 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
         return Ok(func(self.value))
 
+    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+        return func(self.value)
+
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
         return cast(Result[T, F], self)
 
@@ -77,6 +84,9 @@ class Err[E, T = Any](_BaseResult[T, E]):
 
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
         return cast(Result[U, E], self)
+
+    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+        return default
 
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
         return result
