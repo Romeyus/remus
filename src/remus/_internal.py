@@ -205,6 +205,10 @@ class _BaseMaybe[T](ABC):
         """Returns result of `func` if `self` is `Some`, else returns `default`."""
 
     @abstractmethod
+    def map_or_else[U](self, func: Callable[[T], U], default: Callable[[], U]) -> U:
+        """Returns result of `func` if `self` is `Some`, else returns result of `default`."""
+
+    @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Returns `Ok` with `self.value` if `self` is `Some`, else returns `Err` with `err`."""
 
@@ -248,6 +252,9 @@ class Some[T](_BaseMaybe[T]):
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
         return func(self.value)
 
+    def map_or_else[U](self, func: Callable[[T], U], default: Callable[[], U]) -> U:
+        return func(self.value)
+
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Ok(self.value)
 
@@ -285,6 +292,9 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
         return default
+
+    def map_or_else[U](self, func: Callable[[T], U], default: Callable[[], U]) -> U:
+        return default()
 
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Err(err)
