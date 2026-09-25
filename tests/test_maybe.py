@@ -39,3 +39,8 @@ def test_unwrap(some: Some[int]) -> None:
     assert some.unwrap() == 1
     with pytest.raises(Panic):
         Nothing.unwrap()
+
+
+def test_unwrap_or(some: Some[int]) -> None:
+    assert some.unwrap_or(2) == 1
+    assert Nothing.unwrap_or(2) == 2
