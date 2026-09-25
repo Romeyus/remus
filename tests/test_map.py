@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Err, Map, Nothing, Ok, Some
+from remus import Err, Map, MutMap, Nothing, Ok, Some
 
 
 @pytest.fixture
@@ -63,3 +63,19 @@ def test__iter__(map: Map[int, str]) -> None:
 
 def test__len__(map: Map[int, str]) -> None:
     assert len(map) == 3
+
+
+@pytest.fixture
+def mut_map() -> MutMap[int, str]:
+    return MutMap(
+        {
+            0: "zero",
+            1: "one",
+            2: "two",
+        }
+    )
+
+
+def test__setitem__(mut_map: MutMap[int, str]):
+    mut_map[3] = "three"
+    assert mut_map[3] == Ok("three")

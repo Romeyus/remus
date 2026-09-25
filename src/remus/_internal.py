@@ -392,5 +392,9 @@ class Map[K, T]:
         return len(self.data)
 
 
+@dataclass(frozen=True, slots=True)
 class MutMap[K, T](Map[K, T]):
     data: MutableMapping[K, T] = field(default_factory=dict[K, T])
+
+    def __setitem__(self, key: K, value: T) -> None:
+        self.data[key] = value
