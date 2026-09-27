@@ -76,6 +76,20 @@ def mut_map() -> MutMap[int, str]:
     )
 
 
+def test_pop(mut_map: MutMap[int, str]) -> None:
+    assert mut_map.pop(0) == Ok("zero")
+    assert isinstance(mut_map[0], Err) and isinstance(mut_map[0].value, KeyError)
+    assert isinstance(mut_map.pop(3), Err) and isinstance(
+        mut_map.pop(3).value, KeyError
+    )
+
+
+def test_pop_or(mut_map: MutMap[int, str]) -> None:
+    assert mut_map.pop_or(0, "another zero") == "zero"
+    assert isinstance(mut_map[0], Err) and isinstance(mut_map[0].value, KeyError)
+    assert mut_map.pop_or(3, "three") == "three"
+
+
 def test_setdefault(mut_map: MutMap[int, str]) -> None:
     assert mut_map.setdefault(0, "another zero") == "zero"
     assert mut_map[0] == Ok("zero")
