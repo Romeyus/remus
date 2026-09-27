@@ -40,6 +40,11 @@ def test_values(map: Map[int, str]) -> None:
     assert list(map.values()) == ["zero", "one", "two"]
 
 
+def test__bool__(map: Map[int, str]) -> None:
+    assert bool(map) is True
+    assert bool(Map[int, str]({})) is False
+
+
 def test__contains__(map: Map[int, str]) -> None:
     assert 0 in map
     assert 1 in map

@@ -375,6 +375,9 @@ class Map[K, T]:
     def values(self) -> ValuesView[T]:
         return self.data.values()
 
+    def __bool__(self) -> bool:
+        return bool(self.data)
+
     def __contains__(self, key: K) -> bool:
         return key in self.data
 
