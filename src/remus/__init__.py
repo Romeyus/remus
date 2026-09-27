@@ -1,4 +1,5 @@
 from remus._internal import (
+    Array,
     Err,
     Map,
     Maybe,
@@ -12,6 +13,7 @@ from remus._internal import (
 )
 
 __all__ = (
+    "Array",
     "Err",
     "Map",
     "Maybe",

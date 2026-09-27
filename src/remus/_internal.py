@@ -6,6 +6,7 @@ from collections.abc import (
     KeysView,
     Mapping,
     MutableMapping,
+    Sequence,
     ValuesView,
 )
 from dataclasses import dataclass, field
@@ -420,3 +421,33 @@ class MutMap[K, T](Map[K, T]):
 
     def __setitem__(self, key: K, value: T) -> None:
         self.data[key] = value
+
+
+# ==========================================
+# ===            Array                 ===
+# ==========================================
+@dataclass(frozen=True, slots=True)
+class Array[T]:
+    data: Sequence[T]
+
+    def count(self, value: T) -> int:
+        return self.data.count(value)
+
+    def __bool__(self) -> bool:
+        return bool(self.data)
+
+    def __contains__(self, value: T) -> bool:
+        return value in self.data
+
+    def __getitem__(self, index: int) -> Result[T, IndexError]:
+        try:
+            return Ok(self.data[index])
+
+        except IndexError as e:
+            return Err(e)
+
+    def __iter__(self) -> Iterator[T]:
+        return iter(self.data)
+
+    def __len__(self) -> int:
+        return len(self.data)
