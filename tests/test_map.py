@@ -103,6 +103,11 @@ def test_setdefault(mut_map: MutMap[int, str]) -> None:
     assert mut_map[3] == Ok("three")
 
 
+def test__delitem__(mut_map: MutMap[int, str]) -> None:
+    del mut_map[0]
+    assert isinstance(mut_map[0], Err) and isinstance(mut_map[0].value, KeyError)
+
+
 def test__setitem__(mut_map: MutMap[int, str]):
     mut_map[0] = "another zero"
     assert mut_map[0] == Ok("another zero")

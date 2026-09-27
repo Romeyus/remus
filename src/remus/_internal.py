@@ -412,5 +412,8 @@ class MutMap[K, T](Map[K, T]):
     def setdefault(self, key: K, default: T) -> T:
         return self.data.setdefault(key, default)
 
+    def __delitem__(self, key: K) -> None:
+        del self.data[key]
+
     def __setitem__(self, key: K, value: T) -> None:
         self.data[key] = value
