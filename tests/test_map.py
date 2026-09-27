@@ -76,6 +76,11 @@ def mut_map() -> MutMap[int, str]:
     )
 
 
+def test_clear(mut_map: MutMap[int, str]) -> None:
+    mut_map.clear()
+    assert len(mut_map) == 0
+
+
 def test_pop(mut_map: MutMap[int, str]) -> None:
     assert mut_map.pop(0) == Ok("zero")
     assert isinstance(mut_map[0], Err) and isinstance(mut_map[0].value, KeyError)

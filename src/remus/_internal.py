@@ -396,6 +396,9 @@ class Map[K, T]:
 class MutMap[K, T](Map[K, T]):
     data: MutableMapping[K, T] = field(default_factory=dict[K, T])
 
+    def clear(self) -> None:
+        self.data.clear()
+
     def pop(self, key: K) -> Result[T, KeyError]:
         try:
             return Ok(self.data.pop(key))
