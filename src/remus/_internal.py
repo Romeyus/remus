@@ -6,6 +6,7 @@ from collections.abc import (
     KeysView,
     Mapping,
     MutableMapping,
+    MutableSequence,
     Sequence,
     ValuesView,
 )
@@ -451,3 +452,33 @@ class Array[T]:
 
     def __len__(self) -> int:
         return len(self.data)
+
+
+@dataclass(frozen=True, slots=True)
+class MutArray[T](Array[T]):
+    data: MutableSequence[T] = field(default_factory=list[T])
+
+    def append(self, value: T) -> None:
+        self.data.append(value)
+
+    def insert(self, index: int, value: T) -> None:
+        self.data.insert(index, value)
+
+    def pop(self, index: int) -> Result[T, IndexError]:
+        try:
+            return Ok(self.data.pop(index))
+
+        except IndexError as e:
+            return Err(e)
+
+    def pop_or(self, index: int, default: T) -> T:
+        return self.pop(index).unwrap_or(default)
+
+    def prepend(self, value: T) -> None:
+        self.data.insert(0, value)
+
+    def __delitem__(self, index: int) -> None:
+        del self.data[index]
+
+    def __setitem__(self, index: int, value: T) -> None:
+        self.data[index] = value
