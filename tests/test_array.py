@@ -17,6 +17,14 @@ def test_count(array: Array[int]):
     assert array.count(6) == 0
 
 
+def test_first(array: Array[int]):
+    assert array.first() == 1
+
+
+def test_last(array: Array[int]):
+    assert array.last() == 5
+
+
 def test__bool__(array: Array[int]):
     assert bool(array) is True
     assert bool(Array[int]([])) is False

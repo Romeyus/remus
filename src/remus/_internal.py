@@ -434,6 +434,12 @@ class Array[T]:
     def count(self, value: T) -> int:
         return self.data.count(value)
 
+    def first(self) -> T:
+        return self.data[0]
+
+    def last(self) -> T:
+        return self.data[-1]
+
     def __bool__(self) -> bool:
         return bool(self.data)
 
