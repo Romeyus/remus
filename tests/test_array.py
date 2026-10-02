@@ -22,9 +22,19 @@ def test_first(array: Array[int]):
     assert Array[int]([]).first() == Nothing
 
 
+def test_first_or(array: Array[int]):
+    assert array.first_or(0) == 1
+    assert Array[int]([]).first_or(0) == 0
+
+
 def test_last(array: Array[int]):
     assert array.last() == Some(5)
     assert Array[int]([]).last() == Nothing
+
+
+def test_last_or(array: Array[int]):
+    assert array.last_or(0) == 5
+    assert Array[int]([]).last_or(0) == 0
 
 
 def test__bool__(array: Array[int]):

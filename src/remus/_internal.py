@@ -439,10 +439,16 @@ class Array[T]:
             return Nothing
         return Some(self.data[0])
 
+    def first_or(self, default: T) -> T:
+        return self.first().unwrap_or(default)
+
     def last(self) -> Maybe[T]:
         if not self.data:
             return Nothing
         return Some(self.data[-1])
+
+    def last_or(self, default: T) -> T:
+        return self.last().unwrap_or(default)
 
     def __bool__(self) -> bool:
         return bool(self.data)
