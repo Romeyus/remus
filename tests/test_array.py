@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Array, Err, MutArray, Ok
+from remus import Array, Err, MutArray, Nothing, Ok, Some
 
 
 @pytest.fixture
@@ -18,11 +18,13 @@ def test_count(array: Array[int]):
 
 
 def test_first(array: Array[int]):
-    assert array.first() == 1
+    assert array.first() == Some(1)
+    assert Array[int]([]).first() == Nothing
 
 
 def test_last(array: Array[int]):
-    assert array.last() == 5
+    assert array.last() == Some(5)
+    assert Array[int]([]).last() == Nothing
 
 
 def test__bool__(array: Array[int]):
