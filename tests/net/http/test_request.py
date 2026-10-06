@@ -10,6 +10,7 @@ def req() -> http.Request:
         lambda: url.Path("/hello/world"),
         "GET",
         lambda: Map({"content-type": Array(["text/html"])}),
+        lambda: Map({"search": Array(["hello"]), "order_by": Array(["desc"])}),
     )
 
 
@@ -23,3 +24,7 @@ def test_method(req: http.Request) -> None:
 
 def test_headers(req: http.Request) -> None:
     assert req.headers == Map({"content-type": Array(["text/html"])})
+
+
+def test_queries(req: http.Request) -> None:
+    assert req.queries == Map({"search": Array(["hello"]), "order_by": Array(["desc"])})
