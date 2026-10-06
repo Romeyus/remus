@@ -1,6 +1,6 @@
 [project]
 name = "remus"
-version = "0.2.0"
+version = "0.3.0"
 description = "The functional progamming toolkit for Python."
 readme = "README.md"
 authors = [
