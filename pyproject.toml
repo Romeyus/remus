@@ -1,7 +1,7 @@
 [project]
 name = "remus"
 version = "0.2.0"
-description = "Add your description here"
+description = "The functional progamming toolkit for Python."
 readme = "README.md"
 authors = [
     { name = "Romeyus", email = "marco.possamai@proton.me" }
