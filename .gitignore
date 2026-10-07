@@ -1,3 +1,7 @@
+# Pytest
+.coverage
+.pytest_cache
+
 # Python-generated files
 __pycache__/
 *.py[oc]
@@ -8,7 +12,3 @@ wheels/
 
 # Virtual environments
 .venv
-
-# Pytest
-.pytest_cache/
-.coverage
