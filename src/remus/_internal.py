@@ -1,10 +1,10 @@
 import sys
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from threading import current_thread
 from traceback import extract_tb, print_tb
 from types import TracebackType
-from typing import Any, Never, final
+from typing import Any, Never, cast, final, override
 
 # ==========================================
 # ===            Constants                 ===
@@ -63,7 +63,14 @@ sys.excepthook = _panic_excepthook
 # ==========================================
 # ===            Result                 ===
 # ==========================================
-class _BaseResult[T, E](ABC): ...
+class _BaseResult[T, E](ABC):
+    @abstractmethod
+    def and_[U](self, result: Result[U, E]) -> Result[U, E]:
+        """
+        Returns `result` if `self` is an instance of `Ok`, otherwise returns `self`.
+
+        `Result.and_` is eagerly loaded, for lazy loading, use `Result.and_then`
+        """
 
 
 @final
@@ -71,8 +78,16 @@ class _BaseResult[T, E](ABC): ...
 class Ok[T, E = Any](_BaseResult[T, E]):
     value: T
 
+    @override
+    def and_[U](self, result: Result[U, E]) -> Result[U, E]:
+        return result
+
 
 @final
 @dataclass(frozen=True, slots=True)
 class Err[E, T = Any](_BaseResult[T, E]):
     value: E
+
+    @override
+    def and_[U](self, result: Result[U, E]) -> Result[U, E]:
+        return cast(Result[U, E], self)
