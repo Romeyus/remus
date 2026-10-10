@@ -329,6 +329,10 @@ class _BaseMaybe[T](ABC):
     ) -> U:
         """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Some`, otherwise returns the return value of `default_factory`."""
 
+    @abstractmethod
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with `err`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -369,6 +373,10 @@ class Some[T](_BaseMaybe[T]):
     ) -> U:
         return func(self.value)
 
+    @override
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        return Ok(self.value)
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -407,6 +415,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
         self, func: Callable[[T], U], default_factory: Callable[[], U]
     ) -> U:
         return default_factory()
+
+    @override
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        return Err(err)
 
 
 Nothing = NothingType()

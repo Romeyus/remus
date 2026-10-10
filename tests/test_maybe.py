@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from remus import Maybe, Nothing, Some
+from remus import Err, Maybe, Nothing, Ok, Some
 from remus._internal import Panic
 
 
@@ -77,3 +77,8 @@ def test_map_or() -> None:
 def test_map_or_else() -> None:
     assert Some("foo").map_or_else(lambda v: len(v), lambda: 2 * 21) == 3
     assert Nothing.map_or_else(lambda v: len(v), lambda: 2 * 21) == 42
+
+
+def test_ok_or() -> None:
+    assert Some("foo").ok_or(0) == Ok("foo")
+    assert Nothing.ok_or(0) == Err(0)
