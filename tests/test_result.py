@@ -142,3 +142,11 @@ def test_unwrap_err() -> None:
 def test_unwrap_or() -> None:
     assert Ok(2).unwrap_or(10) == 2
     assert Err("failure").unwrap_or(10) == 10
+
+
+def test_unwrap_or_else() -> None:
+    def count(x: str) -> int:
+        return len(x)
+
+    assert Ok(2).unwrap_or_else(count) == 2
+    assert Err("failure").unwrap_or_else(count) == 7

@@ -135,6 +135,10 @@ class _BaseResult[T, E](ABC):
     def unwrap_or(self, default: T) -> T:
         """Returns `self.value` if `self` is an instance of `Ok`, otherwise returns `default`."""
 
+    @abstractmethod
+    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
+        """Returns `self.value` if `self` is an instance of `Ok`, otherwise calls `func` with `self.value` and returns the return value of `func`."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -202,6 +206,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
 
     @override
     def unwrap_or(self, default: T) -> T:
+        return self.value
+
+    @override
+    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
         return self.value
 
 
@@ -272,3 +280,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def unwrap_or(self, default: T) -> T:
         return default
+
+    @override
+    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
+        return func(self.value)
