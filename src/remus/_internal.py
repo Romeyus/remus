@@ -294,18 +294,22 @@ class _BaseMaybe[T](ABC):
     @abstractmethod
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         """
-        Returns `maybe` if `self` is an instance of `Some`, otherwise returns `self`.
+        Returns `maybe` if `self` is an instance of `Some`, otherwise returns `Nothing`.
 
         `Maybe.and_` is eagerly loaded, for lazy loading, use `Maybe.and_then`.
         """
 
     @abstractmethod
     def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
-        """Calls `func` and returns its return value if self is an instance of `Some`, otherwise returns `self`."""
+        """Calls `func` and returns its return value if self is an instance of `Some`, otherwise returns `Nothing`."""
 
     @abstractmethod
     def expect(self, message: str) -> T:
         """Returns `self.value` if `self` is an instance of `Some`, otherwise panics with your custom `message`."""
+
+    @abstractmethod
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        """Returns `self` if `self` is an instance of `Some` and the return value of `predicate` with `self.value` is `True`, otherwise returns `Nothing`."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -324,6 +328,10 @@ class Some[T](_BaseMaybe[T]):
     def expect(self, message: str) -> T:
         return self.value
 
+    @override
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return self if predicate(self.value) else Nothing
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -340,6 +348,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
     @override
     def expect(self, message: str) -> T:
         panic(message)
+
+    @override
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return Nothing
 
 
 Nothing = NothingType()

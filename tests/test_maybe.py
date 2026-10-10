@@ -37,3 +37,12 @@ def test_expect() -> None:
     assert Some(2).expect("testing expect") == 2
     with pytest.raises(Panic, match="testing expect"):
         Nothing.expect("testing expect")
+
+
+def test_filter() -> None:
+    def is_even(x: int) -> bool:
+        return x % 2 == 0
+
+    assert Nothing.filter(is_even) == Nothing
+    assert Some(3).filter(is_even) == Nothing
+    assert Some(4).filter(is_even) == Some(4)
