@@ -67,3 +67,8 @@ def test_inspect() -> None:
 def test_map() -> None:
     assert Some("Hello world!").map(lambda v: len(v)) == Some(12)
     assert Nothing.map(lambda v: len(v)) == Nothing
+
+
+def test_map_or() -> None:
+    assert Some("foo").map_or(lambda v: len(v), 42) == 3
+    assert Nothing.map_or(lambda v: len(v), 42) == 42
