@@ -362,6 +362,7 @@ class _BaseMaybe[T](ABC):
         """Returns `self.value` if `self` is an instance of `Some`, otherwise returns the return value of `func`."""
 
 
+@final
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
     value: T
@@ -430,6 +431,7 @@ class Some[T](_BaseMaybe[T]):
         return self.value
 
 
+@final
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
     value: None = field(default=None, init=False)
