@@ -17,11 +17,22 @@ build-backend = "uv_build"
 dev = [
     "basedpyright>=1.40.2",
     "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
     "ruff>=0.17.0",
 ]
 
 [tool.coverage.run]
 omit = ["*/__init__.py"]
+
+[tool.ruff]
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+]
 
 [tool.pyright]
 extraPaths = ["src"]
