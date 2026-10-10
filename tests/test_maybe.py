@@ -87,3 +87,21 @@ def test_ok_or() -> None:
 def test_ok_or_else() -> None:
     assert Some("foo").ok_or_else(lambda: 0) == Ok("foo")
     assert Nothing.ok_or_else(lambda: 0) == Err(0)
+
+
+def test_or_() -> None:
+    x = Some(2)
+    y = Nothing
+    assert x.or_(y) == Some(2)
+
+    x = Nothing
+    y = Some(100)
+    assert x.or_(y) == Some(100)
+
+    x = Some(2)
+    y = Some(100)
+    assert x.or_(y) == Some(2)
+
+    x = Nothing
+    y = Nothing
+    assert x.or_(y) == Nothing
