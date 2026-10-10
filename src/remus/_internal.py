@@ -95,7 +95,11 @@ class _BaseResult[T, E](ABC):
 
     @abstractmethod
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
-        """Calls `func` with `self.value` and returns a new `Ok` with the return value of `func` if `self` is an instance of `Ok`, otherwise returns `self`."""
+        """Calls `func` with `self.value` and returns a new `Ok` instance with the return value of `func` if `self` is an instance of `Ok`, otherwise returns `self`."""
+
+    @abstractmethod
+    def map_err[F](self, func: Callable[[E], F]) -> Result[T, F]:
+        """Calls `func` with `self.value` and returns a new `Err` instance with the return value of `func` if `self` is an instance of `Err`, otherwise returns `self`."""
 
 
 @final
@@ -132,6 +136,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
         return Ok(func(self.value))
 
+    @override
+    def map_err[F](self, func: Callable[[E], F]) -> Result[T, F]:
+        return cast(Result[T, F], self)
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -166,3 +174,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
         return cast(Result[U, E], self)
+
+    @override
+    def map_err[F](self, func: Callable[[E], F]) -> Result[T, F]:
+        return Err(func(self.value))

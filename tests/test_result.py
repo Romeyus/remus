@@ -76,3 +76,8 @@ def test_inspect_err() -> None:
 def test_map() -> None:
     assert Ok(2).map(lambda v: str(v * 2)) == Ok("4")
     assert Err("failure").map(lambda v: str(v * 2)) == Err("failure")
+
+
+def test_map_err() -> None:
+    assert Ok(2).map_err(lambda v: v.upper()) == Ok(2)
+    assert Err("failure").map_err(lambda v: v.upper()) == Err("FAILURE")
