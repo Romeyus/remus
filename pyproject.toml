@@ -1,0 +1,38 @@
+[project]
+name = "remus"
+version = "0.5.0"
+description = "The functional programming toolkit for Python."
+readme = "README.md"
+authors = [
+    { name = "Romeyus", email = "marco.possamai@proton.me" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.12.8,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "basedpyright>=1.40.2",
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+]
+
+[tool.coverage.run]
+omit = ["*/__init__.py"]
+
+[tool.pyright]
+extraPaths = ["src"]
+ignore = ["**/__pycache__"]
+typeCheckingMode = "strict"
+
+[tool.pytest]
+addopts = [
+    "--cov=src/remus",
+    "--cov-report=term-missing",
+    "--import-mode=importlib",
+]
+pythonpath = ["src"]
+strict = true
