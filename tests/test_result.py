@@ -59,3 +59,15 @@ def test_inspect() -> None:
 
     Err("failure").inspect(func)
     func.assert_not_called()
+
+
+def test_inspect_err() -> None:
+    func = mock.Mock()
+
+    Ok(2).inspect_err(func)
+    func.assert_not_called()
+
+    func.reset_mock()
+
+    Err("failure").inspect_err(func)
+    func.assert_called_once_with("failure")
