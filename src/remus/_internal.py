@@ -1,5 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from threading import current_thread
 from traceback import extract_tb, print_tb
@@ -72,6 +73,10 @@ class _BaseResult[T, E](ABC):
         `Result.and_` is eagerly loaded, for lazy loading, use `Result.and_then`
         """
 
+    @abstractmethod
+    def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
+        """Calls `func` and returns its return value if self is an instance of `Ok`, otherwise returns `self`."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -82,6 +87,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def and_[U](self, result: Result[U, E]) -> Result[U, E]:
         return result
 
+    @override
+    def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
+        return func(self.value)
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -90,4 +99,8 @@ class Err[E, T = Any](_BaseResult[T, E]):
 
     @override
     def and_[U](self, result: Result[U, E]) -> Result[U, E]:
+        return cast(Result[U, E], self)
+
+    @override
+    def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
         return cast(Result[U, E], self)
