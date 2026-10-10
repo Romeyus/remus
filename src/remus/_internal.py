@@ -70,7 +70,7 @@ class _BaseResult[T, E](ABC):
         """
         Returns `result` if `self` is an instance of `Ok`, otherwise returns `self`.
 
-        `Result.and_` is eagerly loaded, for lazy loading, use `Result.and_then`
+        `Result.and_` is eagerly loaded, for lazy loading, use `Result.and_then`.
         """
 
     @abstractmethod
@@ -110,6 +110,14 @@ class _BaseResult[T, E](ABC):
         self, func: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
         """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Ok`, otherwise calls `default_factory` with `self.value` and returns the return value of `default_factory`."""
+
+    @abstractmethod
+    def or_[F](self, result: Result[T, F]) -> Result[T, F]:
+        """
+        Returns `result` if `self` is an instance of `Err`, otherwise returns `self`.
+
+        `Result.or_` is eagerly loaded, for lazy loading, use `Result.or_else`.
+        """
 
 
 @final
@@ -160,6 +168,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     ) -> U:
         return func(self.value)
 
+    @override
+    def or_[F](self, result: Result[T, F]) -> Result[T, F]:
+        return cast(Result[T, F], self)
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -208,3 +220,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
         self, func: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
         return default_factory(self.value)
+
+    @override
+    def or_[F](self, result: Result[T, F]) -> Result[T, F]:
+        return result

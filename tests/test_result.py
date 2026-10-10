@@ -94,3 +94,21 @@ def test_map_or_else() -> None:
         Err("failure").map_or_else(lambda v: str(v * 2), lambda v: v.upper())
         == "FAILURE"
     )
+
+
+def test_or_() -> None:
+    x = Ok(2)
+    y = Err("late error")
+    assert x.or_(y) == Ok(2)
+
+    x = Err("early error")
+    y = Ok(2)
+    assert x.or_(y) == Ok(2)
+
+    x = Err("not a 2")
+    y = Err("late error")
+    assert x.or_(y) == Err("late error")
+
+    x = Ok(2)
+    y = Ok(100)
+    assert x.or_(y) == Ok(2)
