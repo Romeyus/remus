@@ -105,3 +105,15 @@ def test_or_() -> None:
     x = Nothing
     y = Nothing
     assert x.or_(y) == Nothing
+
+
+def test_or_else() -> None:
+    def nobody() -> Maybe[str]:
+        return Nothing
+
+    def vikings() -> Maybe[str]:
+        return Some("vikings")
+
+    assert Some("barbarians").or_else(vikings) == Some("barbarians")
+    assert Nothing.or_else(vikings) == Some("vikings")
+    assert Nothing.or_else(nobody) == Nothing

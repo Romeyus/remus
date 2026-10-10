@@ -345,6 +345,10 @@ class _BaseMaybe[T](ABC):
         `Maybe.or_` is eagerly loaded, for lazy loading, use `Maybe.or_else`.
         """
 
+    @abstractmethod
+    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
+        """Calls `func` and returns its return value if `self` is `Nothing`, otherwise returns `self`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -397,6 +401,10 @@ class Some[T](_BaseMaybe[T]):
     def or_(self, maybe: Maybe[T]) -> Maybe[T]:
         return self
 
+    @override
+    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
+        return self
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -447,6 +455,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
     @override
     def or_(self, maybe: Maybe[T]) -> Maybe[T]:
         return maybe
+
+    @override
+    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
+        return func()
 
 
 Nothing = NothingType()
