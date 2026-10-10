@@ -1,15 +1,22 @@
 import sys
+from abc import ABC
 from dataclasses import dataclass
 from threading import current_thread
 from traceback import extract_tb, print_tb
 from types import TracebackType
-from typing import Never
+from typing import Any, Never, final
 
 # ==========================================
 # ===            Constants                 ===
 # ==========================================
 _PANIC_FONT_RED_BOLD = "\x1b[1;31m"
 _PANIC_FONT_RESET = "\x1b[0m"
+
+
+# ==========================================
+# ===            Types                 ===
+# ==========================================
+type Result[T, E] = Ok[T, E] | Err[E, T]
 
 
 # ==========================================
@@ -51,3 +58,21 @@ def _panic_excepthook(  # pragma: no cover
 
 
 sys.excepthook = _panic_excepthook
+
+
+# ==========================================
+# ===            Result                 ===
+# ==========================================
+class _BaseResult[T, E](ABC): ...
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class Ok[T, E = Any](_BaseResult[T, E]):
+    value: T
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class Err[E, T = Any](_BaseResult[T, E]):
+    value: E
