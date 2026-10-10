@@ -119,6 +119,10 @@ class _BaseResult[T, E](ABC):
         `Result.or_` is eagerly loaded, for lazy loading, use `Result.or_else`.
         """
 
+    @abstractmethod
+    def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
+        """Calls `func` and returns its return value if self is an instance of `Err`, otherwise returns `self`."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -170,6 +174,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
 
     @override
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
+        return cast(Result[T, F], self)
+
+    @override
+    def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
         return cast(Result[T, F], self)
 
 
@@ -224,3 +232,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
         return result
+
+    @override
+    def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
+        return func(self.value)

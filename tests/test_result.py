@@ -112,3 +112,16 @@ def test_or_() -> None:
     x = Ok(2)
     y = Ok(100)
     assert x.or_(y) == Ok(2)
+
+
+def test_or_else() -> None:
+    def sq(x: int) -> Result[int, int]:
+        return Ok(x**2)
+
+    def err(x: int) -> Result[int, int]:
+        return Err(x)
+
+    assert Ok(2).or_else(sq).or_else(sq) == Ok(2)
+    assert Ok(2).or_else(err).or_else(sq) == Ok(2)
+    assert Err(3).or_else(sq).or_else(err) == Ok(9)
+    assert Err(3).or_else(err).or_else(err) == Err(3)
