@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from remus import Maybe, Nothing, Some
@@ -46,3 +48,17 @@ def test_filter() -> None:
     assert Nothing.filter(is_even) == Nothing
     assert Some(3).filter(is_even) == Nothing
     assert Some(4).filter(is_even) == Some(4)
+
+
+def test_inspect() -> None:
+    func = mock.Mock()
+
+    func = mock.Mock()
+
+    Some(2).inspect(func)
+    func.assert_called_once_with(2)
+
+    func.reset_mock()
+
+    Nothing.inspect(func)
+    func.assert_not_called()

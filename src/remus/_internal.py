@@ -311,6 +311,10 @@ class _BaseMaybe[T](ABC):
     def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
         """Returns `self` if `self` is an instance of `Some` and the return value of `predicate` with `self.value` is `True`, otherwise returns `Nothing`."""
 
+    @abstractmethod
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        """Calls `func` with `self.value` if `self` is an instance of `Some`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -332,6 +336,11 @@ class Some[T](_BaseMaybe[T]):
     def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
         return self if predicate(self.value) else Nothing
 
+    @override
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        func(self.value)
+        return self
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -351,6 +360,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     @override
     def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return Nothing
+
+    @override
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
         return Nothing
 
 
