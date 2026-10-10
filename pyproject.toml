@@ -24,6 +24,16 @@ dev = [
 [tool.coverage.run]
 omit = ["*/__init__.py"]
 
+[tool.ruff]
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+]
+
 [tool.pyright]
 extraPaths = ["src"]
 ignore = ["**/__pycache__"]
