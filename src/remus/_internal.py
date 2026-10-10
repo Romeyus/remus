@@ -315,6 +315,10 @@ class _BaseMaybe[T](ABC):
     def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
         """Calls `func` with `self.value` if `self` is an instance of `Some`."""
 
+    @abstractmethod
+    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
+        """Calls `func` with `self.value` and returns a new `Some` instance with the return value of `func` if `self` is an instance of `Some`, otherwise returns `Nothing`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -341,6 +345,10 @@ class Some[T](_BaseMaybe[T]):
         func(self.value)
         return self
 
+    @override
+    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
+        return Some(func(self.value))
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -364,6 +372,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     @override
     def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        return Nothing
+
+    @override
+    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
         return Nothing
 
 

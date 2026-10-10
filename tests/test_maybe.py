@@ -62,3 +62,8 @@ def test_inspect() -> None:
 
     Nothing.inspect(func)
     func.assert_not_called()
+
+
+def test_map() -> None:
+    assert Some("Hello world!").map(lambda v: len(v)) == Some(12)
+    assert Nothing.map(lambda v: len(v)) == Nothing
