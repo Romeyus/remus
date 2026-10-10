@@ -37,3 +37,11 @@ def test_expect() -> None:
     assert Ok(2).expect("testing expect") == 2
     with pytest.raises(Panic, match="testing expect: emergency failure"):
         Err("emergency failure").expect("testing expect")
+
+
+def test_expect_err() -> None:
+    assert (
+        Err("emergency failure").expect_err("testing expect_err") == "emergency failure"
+    )
+    with pytest.raises(Panic, match="testing expect_err: 10"):
+        Ok(10).expect_err("testing expect_err")
