@@ -103,7 +103,13 @@ class _BaseResult[T, E](ABC):
 
     @abstractmethod
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
-        """Calls `func` with `self.value` and returns a new `Ok` instance with the return value of `func` if `self` is an instance of `Ok`, otherwise returns `default`."""
+        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Ok`, otherwise returns `default`."""
+
+    @abstractmethod
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[E], U]
+    ) -> U:
+        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Ok`, otherwise calls `default_factory` with `self.value` and returns the return value of `default_factory`."""
 
 
 @final
@@ -148,6 +154,12 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
         return func(self.value)
 
+    @override
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[E], U]
+    ) -> U:
+        return func(self.value)
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -190,3 +202,9 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
         return default
+
+    @override
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[E], U]
+    ) -> U:
+        return default_factory(self.value)

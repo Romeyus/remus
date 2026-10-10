@@ -86,3 +86,11 @@ def test_map_err() -> None:
 def test_map_or() -> None:
     assert Ok(2).map_or(lambda v: str(v * 2), "10") == "4"
     assert Err("failure").map_or(lambda v: str(v * 2), "10") == "10"
+
+
+def test_map_or_else() -> None:
+    assert Ok(2).map_or_else(lambda v: str(v * 2), lambda v: v.upper()) == "4"
+    assert (
+        Err("failure").map_or_else(lambda v: str(v * 2), lambda v: v.upper())
+        == "FAILURE"
+    )
