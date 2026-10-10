@@ -299,6 +299,10 @@ class _BaseMaybe[T](ABC):
         `Maybe.and_` is eagerly loaded, for lazy loading, use `Maybe.and_then`.
         """
 
+    @abstractmethod
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        """Calls `func` and returns its return value if self is an instance of `Some`, otherwise returns `self`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -308,6 +312,10 @@ class Some[T](_BaseMaybe[T]):
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
         return maybe
 
+    @override
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        return func(self.value)
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -315,6 +323,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
 
     @override
     def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return Nothing
+
+    @override
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
         return Nothing
 
 
