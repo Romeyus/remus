@@ -123,3 +123,8 @@ def test_unwrap() -> None:
     assert Some("air").unwrap() == "air"
     with pytest.raises(Panic):
         Nothing.unwrap()
+
+
+def test_unwrap_or() -> None:
+    assert Some("car").unwrap_or("bike") == "car"
+    assert Nothing.unwrap_or("bike") == "bike"
