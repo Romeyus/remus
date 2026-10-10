@@ -128,3 +128,8 @@ def test_unwrap() -> None:
 def test_unwrap_or() -> None:
     assert Some("car").unwrap_or("bike") == "car"
     assert Nothing.unwrap_or("bike") == "bike"
+
+
+def test_unwrap_or_else() -> None:
+    assert Some(4).unwrap_or_else(lambda: 2 * 10) == 4
+    assert Nothing.unwrap_or_else(lambda: 2 * 10) == 20
