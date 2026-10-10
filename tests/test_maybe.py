@@ -1,4 +1,7 @@
+import pytest
+
 from remus import Maybe, Nothing, Some
+from remus._internal import Panic
 
 
 def test_and_() -> None:
@@ -28,3 +31,9 @@ def test_and_then() -> None:
     assert Some(2).and_then(sq_then_to_str) == Some("4")
     assert Some(1_000_001).and_then(sq_then_to_str) == Nothing  # overflowed
     assert Nothing.and_then(sq_then_to_str) == Nothing
+
+
+def test_expect() -> None:
+    assert Some(2).expect("testing expect") == 2
+    with pytest.raises(Panic, match="testing expect"):
+        Nothing.expect("testing expect")

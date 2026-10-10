@@ -303,6 +303,10 @@ class _BaseMaybe[T](ABC):
     def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
         """Calls `func` and returns its return value if self is an instance of `Some`, otherwise returns `self`."""
 
+    @abstractmethod
+    def expect(self, message: str) -> T:
+        """Returns `self.value` if `self` is an instance of `Some`, otherwise panics with your custom `message`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -316,6 +320,10 @@ class Some[T](_BaseMaybe[T]):
     def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
         return func(self.value)
 
+    @override
+    def expect(self, message: str) -> T:
+        return self.value
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -328,6 +336,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
     @override
     def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
         return Nothing
+
+    @override
+    def expect(self, message: str) -> T:
+        panic(message)
 
 
 Nothing = NothingType()
