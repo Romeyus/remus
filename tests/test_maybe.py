@@ -117,3 +117,9 @@ def test_or_else() -> None:
     assert Some("barbarians").or_else(vikings) == Some("barbarians")
     assert Nothing.or_else(vikings) == Some("vikings")
     assert Nothing.or_else(nobody) == Nothing
+
+
+def test_unwrap() -> None:
+    assert Some("air").unwrap() == "air"
+    with pytest.raises(Panic):
+        Nothing.unwrap()

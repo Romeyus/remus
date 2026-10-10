@@ -349,6 +349,10 @@ class _BaseMaybe[T](ABC):
     def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
         """Calls `func` and returns its return value if `self` is `Nothing`, otherwise returns `self`."""
 
+    @abstractmethod
+    def unwrap(self) -> T:
+        """Returns `self.value` if `self` is an instance of `Some`, otherwise panics."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -405,6 +409,10 @@ class Some[T](_BaseMaybe[T]):
     def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
         return self
 
+    @override
+    def unwrap(self) -> T:
+        return self.value
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -459,6 +467,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
     @override
     def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
         return func()
+
+    @override
+    def unwrap(self) -> T:
+        panic("called Maybe.unwrap() on Nothing")
 
 
 Nothing = NothingType()
