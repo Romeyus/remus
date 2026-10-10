@@ -123,6 +123,10 @@ class _BaseResult[T, E](ABC):
     def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
         """Calls `func` and returns its return value if self is an instance of `Err`, otherwise returns `self`."""
 
+    @abstractmethod
+    def unwrap(self) -> T:
+        """Returns `self.value` if `self` is an instance of `Ok`, otherwise panics."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -180,6 +184,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
         return cast(Result[T, F], self)
 
+    @override
+    def unwrap(self) -> T:
+        return self.value
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -236,3 +244,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
         return func(self.value)
+
+    @override
+    def unwrap(self) -> T:
+        panic(f"called Result.unwrap() on an Err value, {self.value}")

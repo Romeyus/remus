@@ -125,3 +125,9 @@ def test_or_else() -> None:
     assert Ok(2).or_else(err).or_else(sq) == Ok(2)
     assert Err(3).or_else(sq).or_else(err) == Ok(9)
     assert Err(3).or_else(err).or_else(err) == Err(3)
+
+
+def test_unwrap() -> None:
+    assert Ok(2).unwrap() == 2
+    with pytest.raises(Panic):
+        Err("failure").unwrap()
