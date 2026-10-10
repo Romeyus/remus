@@ -1,3 +1,5 @@
+from unittest import mock
+
 import pytest
 
 from remus import Err, Ok, Result
@@ -45,3 +47,15 @@ def test_expect_err() -> None:
     )
     with pytest.raises(Panic, match="testing expect_err: 10"):
         Ok(10).expect_err("testing expect_err")
+
+
+def test_inspect() -> None:
+    func = mock.Mock()
+
+    Ok(2).inspect(func)
+    func.assert_called_once_with(2)
+
+    func.reset_mock()
+
+    Err("failure").inspect(func)
+    func.assert_not_called()

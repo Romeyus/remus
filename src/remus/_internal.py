@@ -85,6 +85,10 @@ class _BaseResult[T, E](ABC):
     def expect_err(self, message: str) -> E:
         """Returns `self.value` if `self` is an instance of `Err`, otherwise panics with your custom `message`."""
 
+    @abstractmethod
+    def inspect(self, func: Callable[[T], Any]) -> Result[T, E]:
+        """Calls `func` with `self.value` if `self` is an instance of `Ok`."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -107,6 +111,11 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def expect_err(self, message: str) -> E:
         panic(f"{message}: {self.value}")
 
+    @override
+    def inspect(self, func: Callable[[T], Any]) -> Result[T, E]:
+        func(self.value)
+        return self
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -128,3 +137,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def expect_err(self, message: str) -> E:
         return self.value
+
+    @override
+    def inspect(self, func: Callable[[T], Any]) -> Result[T, E]:
+        return self
