@@ -1,7 +1,7 @@
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import current_thread
 from traceback import extract_tb, print_tb
 from types import TracebackType
@@ -18,6 +18,7 @@ _PANIC_FONT_RESET = "\x1b[0m"
 # ===            Types                 ===
 # ==========================================
 type Result[T, E] = Ok[T, E] | Err[E, T]
+type Maybe[T] = Some[T] | NothingType[T]
 
 
 # ==========================================
@@ -284,3 +285,22 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def unwrap_or_else(self, func: Callable[[E], T]) -> T:
         return func(self.value)
+
+
+# ==========================================
+# ===            Maybe                 ===
+# ==========================================
+class _BaseMaybe[T](ABC): ...
+
+
+@dataclass(frozen=True, slots=True)
+class Some[T](_BaseMaybe[T]):
+    value: T
+
+
+@dataclass(frozen=True, slots=True)
+class NothingType[T = Any](_BaseMaybe[T]):
+    value: None = field(default=None, init=False)
+
+
+Nothing = NothingType()
