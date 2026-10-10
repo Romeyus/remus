@@ -333,6 +333,10 @@ class _BaseMaybe[T](ABC):
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with `err`."""
 
+    @abstractmethod
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with the return value of `func`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -377,6 +381,10 @@ class Some[T](_BaseMaybe[T]):
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Ok(self.value)
 
+    @override
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        return Ok(self.value)
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -419,6 +427,10 @@ class NothingType[T = Any](_BaseMaybe[T]):
     @override
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Err(err)
+
+    @override
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        return Err(func())
 
 
 Nothing = NothingType()

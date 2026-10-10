@@ -82,3 +82,8 @@ def test_map_or_else() -> None:
 def test_ok_or() -> None:
     assert Some("foo").ok_or(0) == Ok("foo")
     assert Nothing.ok_or(0) == Err(0)
+
+
+def test_ok_or_else() -> None:
+    assert Some("foo").ok_or_else(lambda: 0) == Ok("foo")
+    assert Nothing.ok_or_else(lambda: 0) == Err(0)
