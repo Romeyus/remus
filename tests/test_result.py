@@ -131,3 +131,9 @@ def test_unwrap() -> None:
     assert Ok(2).unwrap() == 2
     with pytest.raises(Panic):
         Err("failure").unwrap()
+
+
+def test_unwrap_err() -> None:
+    assert Err("failure").unwrap_err() == "failure"
+    with pytest.raises(Panic):
+        Ok(2).unwrap_err()

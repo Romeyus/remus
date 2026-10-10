@@ -127,6 +127,10 @@ class _BaseResult[T, E](ABC):
     def unwrap(self) -> T:
         """Returns `self.value` if `self` is an instance of `Ok`, otherwise panics."""
 
+    @abstractmethod
+    def unwrap_err(self) -> E:
+        """Returns `self.value` if `self` is an instance of `Err`, otherwise panics."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -188,6 +192,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def unwrap(self) -> T:
         return self.value
 
+    @override
+    def unwrap_err(self) -> E:
+        panic(f"called Result.unwrap_err() on an Ok value, {self.value}")
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -248,3 +256,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def unwrap(self) -> T:
         panic(f"called Result.unwrap() on an Err value, {self.value}")
+
+    @override
+    def unwrap_err(self) -> E:
+        return self.value
