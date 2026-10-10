@@ -71,3 +71,8 @@ def test_inspect_err() -> None:
 
     Err("failure").inspect_err(func)
     func.assert_called_once_with("failure")
+
+
+def test_map() -> None:
+    assert Ok(2).map(lambda v: str(v * 2)) == Ok("4")
+    assert Err("failure").map(lambda v: str(v * 2)) == Err("failure")

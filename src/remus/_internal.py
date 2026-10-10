@@ -93,6 +93,10 @@ class _BaseResult[T, E](ABC):
     def inspect_err(self, func: Callable[[E], Any]) -> Result[T, E]:
         """Calls `func` with `self.value` if `self` is an instance of `Err`."""
 
+    @abstractmethod
+    def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
+        """Calls `func` with `self.value` and returns a new `Ok` with the return value of `func` if `self` is an instance of `Ok`, otherwise returns `self`."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -124,6 +128,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def inspect_err(self, func: Callable[[E], Any]) -> Result[T, E]:
         return self
 
+    @override
+    def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
+        return Ok(func(self.value))
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -154,3 +162,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     def inspect_err(self, func: Callable[[E], Any]) -> Result[T, E]:
         func(self.value)
         return self
+
+    @override
+    def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
+        return cast(Result[U, E], self)
