@@ -72,3 +72,8 @@ def test_map() -> None:
 def test_map_or() -> None:
     assert Some("foo").map_or(lambda v: len(v), 42) == 3
     assert Nothing.map_or(lambda v: len(v), 42) == 42
+
+
+def test_map_or_else() -> None:
+    assert Some("foo").map_or_else(lambda v: len(v), lambda: 2 * 21) == 3
+    assert Nothing.map_or_else(lambda v: len(v), lambda: 2 * 21) == 42

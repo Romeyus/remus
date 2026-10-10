@@ -323,6 +323,12 @@ class _BaseMaybe[T](ABC):
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
         """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Some`, otherwise returns `default`."""
 
+    @abstractmethod
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[], U]
+    ) -> U:
+        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Some`, otherwise returns the return value of `default_factory`."""
+
 
 @dataclass(frozen=True, slots=True)
 class Some[T](_BaseMaybe[T]):
@@ -357,6 +363,12 @@ class Some[T](_BaseMaybe[T]):
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
         return func(self.value)
 
+    @override
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[], U]
+    ) -> U:
+        return func(self.value)
+
 
 @dataclass(frozen=True, slots=True)
 class NothingType[T = Any](_BaseMaybe[T]):
@@ -389,6 +401,12 @@ class NothingType[T = Any](_BaseMaybe[T]):
     @override
     def map_or[U](self, func: Callable[[T], U], default: U) -> U:
         return default
+
+    @override
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[], U]
+    ) -> U:
+        return default_factory()
 
 
 Nothing = NothingType()
