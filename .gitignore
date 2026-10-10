@@ -10,5 +10,8 @@ wheels/
 .coverage
 .pytest_cache
 
+# Ruff
+.ruff_cache
+
 # Virtual environments
 .venv

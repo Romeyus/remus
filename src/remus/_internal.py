@@ -77,6 +77,10 @@ class _BaseResult[T, E](ABC):
     def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
         """Calls `func` and returns its return value if self is an instance of `Ok`, otherwise returns `self`."""
 
+    @abstractmethod
+    def expect(self, message: str) -> T:
+        """Returns `self.value` if `self` is an instance of `Ok`, otherwise panics with your custom `message`."""
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -91,6 +95,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
     def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
         return func(self.value)
 
+    @override
+    def expect(self, message: str) -> T:
+        return self.value
+
 
 @final
 @dataclass(frozen=True, slots=True)
@@ -104,3 +112,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
         return cast(Result[U, E], self)
+
+    @override
+    def expect(self, message: str) -> T:
+        panic(f"{message}: {self.value}")

@@ -1,4 +1,7 @@
+import pytest
+
 from remus import Err, Ok, Result
+from remus._internal import Panic
 
 
 def test_and_() -> None:
@@ -28,3 +31,9 @@ def test_and_then() -> None:
     assert Ok(2).and_then(sq_then_to_str) == Ok("4")
     assert Ok(1_000_001).and_then(sq_then_to_str) == Err("overflowed")
     assert Err("not a number").and_then(sq_then_to_str) == Err("not a number")
+
+
+def test_expect() -> None:
+    assert Ok(2).expect("testing expect") == 2
+    with pytest.raises(Panic, match="testing expect: emergency failure"):
+        Err("emergency failure").expect("testing expect")
