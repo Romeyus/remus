@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Iterator, MutableSequence, Sequence
+from collections.abc import Callable, Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
 from typing import final, override
 
@@ -22,6 +22,9 @@ class BaseArray[T](ABC):
 
     def get_or(self, index: int, default: T) -> T:
         return self[index].unwrap_or(default)
+
+    def get_or_else(self, index: int, default_factory: Callable[[], T]) -> T:
+        return self.get(index).unwrap_or_else(default_factory)
 
     @abstractmethod
     def __contains__(self, value: T) -> bool: ...
