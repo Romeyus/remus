@@ -20,6 +20,9 @@ class BaseArray[T](ABC):
     def get(self, index: int) -> Maybe[T]:
         return self[index].ok()
 
+    def get_or(self, index: int, default: T) -> T:
+        return self[index].unwrap_or(default)
+
     @abstractmethod
     def __contains__(self, value: T) -> bool: ...
 

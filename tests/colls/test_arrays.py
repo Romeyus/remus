@@ -25,6 +25,13 @@ def test_get(array: colls.BaseArray[int]) -> None:
     assert array.get(ARRAY_LENGTH + 1) == Nothing
 
 
+def test_get_or(array: colls.BaseArray[int]) -> None:
+    for i in range(ARRAY_LENGTH):
+        assert array.get_or(i, 100) == i
+
+    assert array.get_or(ARRAY_LENGTH + 1, 100) == 100
+
+
 def test___contains__(array: colls.Array[int]) -> None:
     for i in range(ARRAY_LENGTH):
         assert i in array
