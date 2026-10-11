@@ -1,7 +1,11 @@
 import pytest
 
 from remus import Err, Nothing, Ok, Some, colls
+from remus._internal import Panic
 
+# ==========================================
+# ===            Constants                 ===
+# ==========================================
 ARRAY_LENGTH = 10
 
 
@@ -10,6 +14,9 @@ def array() -> colls.MutArray[int]:
     return colls.MutArray([i for i in range(ARRAY_LENGTH)])
 
 
+# ==========================================
+# ===            Array                 ===
+# ==========================================
 def test_count(array: colls.BaseArray[int]) -> None:
     for i in range(ARRAY_LENGTH):
         assert array.count(i) == 1
@@ -59,3 +66,23 @@ def test___iter__(array: colls.Array[int]) -> None:
 
 def test___len__(array: colls.Array[int]) -> None:
     assert len(array) == ARRAY_LENGTH
+
+
+# ==========================================
+# ===            MutArray                 ===
+# ==========================================
+def test___delitem__(array: colls.MutArray[int]) -> None:
+    del array[5]
+    assert len(array) == ARRAY_LENGTH - 1
+    assert 5 not in array
+
+    with pytest.raises(Panic):
+        del array[ARRAY_LENGTH + 1]
+
+
+def test___setitem__(array: colls.MutArray[int]) -> None:
+    array[5] = 100
+    assert array[5] == Ok(100)
+
+    with pytest.raises(Panic):
+        array[ARRAY_LENGTH + 1] = 200

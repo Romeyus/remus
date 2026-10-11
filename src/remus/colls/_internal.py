@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
 from typing import final, override
 
-from remus._internal import Err, Maybe, Ok, Result
+from remus._internal import Err, Maybe, Ok, Result, panic
 
 
 # ==========================================
@@ -64,9 +64,33 @@ class Array[T](BaseArray[T]):
         return len(self.data)
 
 
+class BaseMutArray[T](BaseArray[T], ABC):
+    @abstractmethod
+    def __delitem__(self, index: int) -> None: ...
+
+    @abstractmethod
+    def __setitem__(self, index: int, value: T) -> None: ...
+
+
 @dataclass(frozen=True, slots=True)
-class MutArray[T](Array[T], BaseArray[T]):
+class MutArray[T](Array[T], BaseMutArray[T]):
     data: MutableSequence[T]
+
+    @override
+    def __delitem__(self, index: int) -> None:
+        try:
+            del self.data[index]
+
+        except IndexError:
+            panic(str(IndexErr(index)))
+
+    @override
+    def __setitem__(self, index: int, value: T) -> None:
+        try:
+            self.data[index] = value
+
+        except IndexError:
+            panic(str(IndexErr(index)))
 
 
 @final
