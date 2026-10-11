@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Err, Ok, colls
+from remus import Err, Nothing, Ok, Some, colls
 
 ARRAY_LENGTH = 10
 
@@ -8,6 +8,13 @@ ARRAY_LENGTH = 10
 @pytest.fixture
 def array() -> colls.MutArray[int]:
     return colls.MutArray([i for i in range(ARRAY_LENGTH)])
+
+
+def test_get(array: colls.BaseArray[int]) -> None:
+    for i in range(ARRAY_LENGTH):
+        assert array.get(i) == Some(i)
+
+    assert array.get(ARRAY_LENGTH + 1) == Nothing
 
 
 def test___contains__(array: colls.Array[int]) -> None:

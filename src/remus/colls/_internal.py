@@ -3,13 +3,16 @@ from collections.abc import Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
 from typing import final, override
 
-from remus._internal import Err, Ok, Result
+from remus._internal import Err, Maybe, Ok, Result
 
 
 # ==========================================
 # ===            Arrays                 ===
 # ==========================================
 class BaseArray[T](ABC):
+    def get(self, index: int) -> Maybe[T]:
+        return self[index].ok()
+
     @abstractmethod
     def __contains__(self, value: T) -> bool: ...
 
