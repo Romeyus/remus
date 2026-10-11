@@ -10,6 +10,13 @@ from remus._internal import Err, Maybe, Ok, Result
 # ===            Arrays                 ===
 # ==========================================
 class BaseArray[T](ABC):
+    def count(self, value: T) -> int:
+        hits = 0
+        for i in self:
+            if i == value:
+                hits += 1
+        return hits
+
     def get(self, index: int) -> Maybe[T]:
         return self[index].ok()
 

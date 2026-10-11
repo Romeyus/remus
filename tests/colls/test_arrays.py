@@ -10,6 +10,14 @@ def array() -> colls.MutArray[int]:
     return colls.MutArray([i for i in range(ARRAY_LENGTH)])
 
 
+def test_count(array: colls.BaseArray[int]) -> None:
+    for i in range(ARRAY_LENGTH):
+        assert array.count(i) == 1
+
+    assert array.count(ARRAY_LENGTH + 1) == 0
+    assert colls.Array([100] * 10).count(100) == 10
+
+
 def test_get(array: colls.BaseArray[int]) -> None:
     for i in range(ARRAY_LENGTH):
         assert array.get(i) == Some(i)
