@@ -87,6 +87,16 @@ def test_append(array: colls.BaseMutArray[int]) -> None:
     assert len(array) == ARRAY_LENGTH + 1
 
 
+def test_clear(array: colls.BaseMutArray[int]) -> None:
+    array.clear()
+    for i in range(ARRAY_LENGTH):
+        assert i not in array
+
+    array = colls.MutArray()
+    array.clear()
+    assert array == colls.MutArray()
+
+
 def test_insert(array: colls.MutArray[int]) -> None:
     array.insert(0, 100)
     assert array[0] == Ok(100)

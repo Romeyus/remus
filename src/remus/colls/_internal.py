@@ -74,6 +74,11 @@ class BaseMutArray[T](BaseArray[T], ABC):
     def append(self, value: T) -> None:
         self.insert(len(self), value)
 
+    def clear(self) -> None:
+        max_index = len(self) - 1
+        for i in range(max_index + 1):
+            del self[max_index - i]
+
     @abstractmethod
     def insert(self, index: int, value: T) -> None: ...
 
