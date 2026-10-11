@@ -19,6 +19,9 @@ class BaseArray[T](ABC):
     @abstractmethod
     def __iter__(self) -> Iterator[T]: ...
 
+    @abstractmethod
+    def __len__(self) -> int: ...
+
 
 @dataclass(frozen=True, slots=True)
 class Array[T](BaseArray[T]):
@@ -39,6 +42,10 @@ class Array[T](BaseArray[T]):
     @override
     def __iter__(self) -> Iterator[T]:
         return iter(self.data)
+
+    @override
+    def __len__(self) -> int:
+        return len(self.data)
 
 
 @dataclass(frozen=True, slots=True)
