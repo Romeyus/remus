@@ -77,6 +77,9 @@ class BaseMutArray[T](BaseArray[T], ABC):
     @abstractmethod
     def insert(self, index: int, value: T) -> None: ...
 
+    def pop(self, index: int) -> Result[T, IndexErr]:
+        return self[index].inspect(lambda _: self.__delitem__(index))
+
     def prepend(self, value: T) -> None:
         self.insert(0, value)
 

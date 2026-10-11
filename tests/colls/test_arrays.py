@@ -104,6 +104,14 @@ def test_prepend(array: colls.BaseMutArray[int]) -> None:
     assert len(array) == ARRAY_LENGTH + 1
 
 
+def test_pop(array: colls.BaseMutArray[int]) -> None:
+    assert array.pop(5) == Ok(5)
+    assert 5 not in array
+    assert len(array) == ARRAY_LENGTH - 1
+
+    assert array.pop(ARRAY_LENGTH + 1) == Err(colls.IndexErr(ARRAY_LENGTH + 1))
+
+
 def test___delitem__(array: colls.MutArray[int]) -> None:
     del array[5]
     assert len(array) == ARRAY_LENGTH - 1
