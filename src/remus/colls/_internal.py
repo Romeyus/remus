@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Iterator, MutableSequence, Sequence
 from dataclasses import dataclass
 from typing import final, override
 
@@ -15,6 +15,9 @@ class BaseArray[T](ABC):
 
     @abstractmethod
     def __getitem__(self, index: int) -> Result[T, IndexErr]: ...
+
+    @abstractmethod
+    def __iter__(self) -> Iterator[T]: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -32,6 +35,10 @@ class Array[T](BaseArray[T]):
 
         except IndexError:
             return Err(IndexErr(index))
+
+    @override
+    def __iter__(self) -> Iterator[T]:
+        return iter(self.data)
 
 
 @dataclass(frozen=True, slots=True)

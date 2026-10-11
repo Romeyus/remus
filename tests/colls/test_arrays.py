@@ -22,3 +22,7 @@ def test___getitem__(array: colls.Array[int]) -> None:
         assert array[i] == Ok(i)
 
     assert array[ARRAY_LENGTH + 1] == Err(colls.IndexErr(ARRAY_LENGTH + 1))
+
+
+def test___iter__(array: colls.Array[int]) -> None:
+    assert list(iter(array)) == [i for i in range(ARRAY_LENGTH)]
