@@ -66,6 +66,9 @@ class Array[T](BaseArray[T]):
 
 class BaseMutArray[T](BaseArray[T], ABC):
     @abstractmethod
+    def insert(self, index: int, value: T) -> None: ...
+
+    @abstractmethod
     def __delitem__(self, index: int) -> None: ...
 
     @abstractmethod
@@ -75,6 +78,10 @@ class BaseMutArray[T](BaseArray[T], ABC):
 @dataclass(frozen=True, slots=True)
 class MutArray[T](Array[T], BaseMutArray[T]):
     data: MutableSequence[T]
+
+    @override
+    def insert(self, index: int, value: T) -> None:
+        self.data.insert(index, value)
 
     @override
     def __delitem__(self, index: int) -> None:

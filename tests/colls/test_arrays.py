@@ -71,7 +71,18 @@ def test___len__(array: colls.Array[int]) -> None:
 # ==========================================
 # ===            MutArray                 ===
 # ==========================================
-def test___delitem__(array: colls.MutArray[int]) -> None:
+def test_insert(array: colls.BaseMutArray[int]) -> None:
+    array.insert(0, 100)
+    assert array[0] == Ok(100)
+
+    array.insert(5, 200)
+    assert array[5] == Ok(200)
+
+    array.insert(len(array), 300)
+    assert array[-1] == Ok(300)
+
+
+def test___delitem__(array: colls.BaseMutArray[int]) -> None:
     del array[5]
     assert len(array) == ARRAY_LENGTH - 1
     assert 5 not in array
@@ -80,7 +91,7 @@ def test___delitem__(array: colls.MutArray[int]) -> None:
         del array[ARRAY_LENGTH + 1]
 
 
-def test___setitem__(array: colls.MutArray[int]) -> None:
+def test___setitem__(array: colls.BaseMutArray[int]) -> None:
     array[5] = 100
     assert array[5] == Ok(100)
 
