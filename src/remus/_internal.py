@@ -79,6 +79,10 @@ class _BaseResult[T, E](ABC):
         """Calls `func` and returns its return value if self is an instance of `Ok`, otherwise returns `self`."""
 
     @abstractmethod
+    def err(self) -> Maybe[E]:
+        """Returns `Some` with `self.value` if `self` is an instance of `Err`, otherwise returns `Nothing`."""
+
+    @abstractmethod
     def expect(self, message: str) -> T:
         """Returns `self.value` if `self` is an instance of `Ok`, otherwise panics with your custom `message`."""
 
@@ -111,6 +115,10 @@ class _BaseResult[T, E](ABC):
         self, func: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
         """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Ok`, otherwise calls `default_factory` with `self.value` and returns the return value of `default_factory`."""
+
+    @abstractmethod
+    def ok(self) -> Maybe[T]:
+        """Returns `Some` with `self.value` if `self` is an instance of `Ok`, otherwise returns `Nothing`."""
 
     @abstractmethod
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
@@ -155,6 +163,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         return func(self.value)
 
     @override
+    def err(self) -> Maybe[E]:
+        return Nothing
+
+    @override
     def expect(self, message: str) -> T:
         return self.value
 
@@ -188,6 +200,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         self, func: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
         return func(self.value)
+
+    @override
+    def ok(self) -> Maybe[T]:
+        return Some(self.value)
 
     @override
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
@@ -228,6 +244,10 @@ class Err[E, T = Any](_BaseResult[T, E]):
         return cast(Result[U, E], self)
 
     @override
+    def err(self) -> Maybe[E]:
+        return Some(self.value)
+
+    @override
     def expect(self, message: str) -> T:
         panic(f"{message}: {self.value}")
 
@@ -261,6 +281,10 @@ class Err[E, T = Any](_BaseResult[T, E]):
         self, func: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
         return default_factory(self.value)
+
+    @override
+    def ok(self) -> Maybe[T]:
+        return Nothing
 
     @override
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
