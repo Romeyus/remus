@@ -1,7 +1,7 @@
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import current_thread
 from traceback import extract_tb, print_tb
 from types import TracebackType
@@ -18,6 +18,7 @@ _PANIC_FONT_RESET = "\x1b[0m"
 # ===            Types                 ===
 # ==========================================
 type Result[T, E] = Ok[T, E] | Err[E, T]
+type Maybe[T] = Some[T] | NothingType[T]
 
 
 # ==========================================
@@ -284,3 +285,218 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def unwrap_or_else(self, func: Callable[[E], T]) -> T:
         return func(self.value)
+
+
+# ==========================================
+# ===            Maybe                 ===
+# ==========================================
+class _BaseMaybe[T](ABC):
+    @abstractmethod
+    def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        """
+        Returns `maybe` if `self` is an instance of `Some`, otherwise returns `Nothing`.
+
+        `Maybe.and_` is eagerly loaded, for lazy loading, use `Maybe.and_then`.
+        """
+
+    @abstractmethod
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        """Calls `func` and returns its return value if self is an instance of `Some`, otherwise returns `Nothing`."""
+
+    @abstractmethod
+    def expect(self, message: str) -> T:
+        """Returns `self.value` if `self` is an instance of `Some`, otherwise panics with your custom `message`."""
+
+    @abstractmethod
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        """Returns `self` if `self` is an instance of `Some` and the return value of `predicate` with `self.value` is `True`, otherwise returns `Nothing`."""
+
+    @abstractmethod
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        """Calls `func` with `self.value` if `self` is an instance of `Some`."""
+
+    @abstractmethod
+    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
+        """Calls `func` with `self.value` and returns a new `Some` instance with the return value of `func` if `self` is an instance of `Some`, otherwise returns `Nothing`."""
+
+    @abstractmethod
+    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Some`, otherwise returns `default`."""
+
+    @abstractmethod
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[], U]
+    ) -> U:
+        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Some`, otherwise returns the return value of `default_factory`."""
+
+    @abstractmethod
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with `err`."""
+
+    @abstractmethod
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with the return value of `func`."""
+
+    @abstractmethod
+    def or_(self, maybe: Maybe[T]) -> Maybe[T]:
+        """
+        Returns `maybe` if `self` is `Nothing`, otherwise returns `self`.
+
+        `Maybe.or_` is eagerly loaded, for lazy loading, use `Maybe.or_else`.
+        """
+
+    @abstractmethod
+    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
+        """Calls `func` and returns its return value if `self` is `Nothing`, otherwise returns `self`."""
+
+    @abstractmethod
+    def unwrap(self) -> T:
+        """Returns `self.value` if `self` is an instance of `Some`, otherwise panics."""
+
+    @abstractmethod
+    def unwrap_or(self, default: T) -> T:
+        """Returns `self.value` if `self` is an instance of `Some`, otherwise returns `default`."""
+
+    @abstractmethod
+    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+        """Returns `self.value` if `self` is an instance of `Some`, otherwise returns the return value of `func`."""
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class Some[T](_BaseMaybe[T]):
+    value: T
+
+    @override
+    def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return maybe
+
+    @override
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        return func(self.value)
+
+    @override
+    def expect(self, message: str) -> T:
+        return self.value
+
+    @override
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return self if predicate(self.value) else Nothing
+
+    @override
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        func(self.value)
+        return self
+
+    @override
+    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
+        return Some(func(self.value))
+
+    @override
+    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+        return func(self.value)
+
+    @override
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[], U]
+    ) -> U:
+        return func(self.value)
+
+    @override
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        return Ok(self.value)
+
+    @override
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        return Ok(self.value)
+
+    @override
+    def or_(self, maybe: Maybe[T]) -> Maybe[T]:
+        return self
+
+    @override
+    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
+        return self
+
+    @override
+    def unwrap(self) -> T:
+        return self.value
+
+    @override
+    def unwrap_or(self, default: T) -> T:
+        return self.value
+
+    @override
+    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+        return self.value
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class NothingType[T = Any](_BaseMaybe[T]):
+    value: None = field(default=None, init=False)
+
+    @override
+    def and_[U](self, maybe: Maybe[U]) -> Maybe[U]:
+        return Nothing
+
+    @override
+    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        return Nothing
+
+    @override
+    def expect(self, message: str) -> T:
+        panic(message)
+
+    @override
+    def filter(self, predicate: Callable[[T], bool]) -> Maybe[T]:
+        return Nothing
+
+    @override
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        return Nothing
+
+    @override
+    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
+        return Nothing
+
+    @override
+    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+        return default
+
+    @override
+    def map_or_else[U](
+        self, func: Callable[[T], U], default_factory: Callable[[], U]
+    ) -> U:
+        return default_factory()
+
+    @override
+    def ok_or[E](self, err: E) -> Result[T, E]:
+        return Err(err)
+
+    @override
+    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+        return Err(func())
+
+    @override
+    def or_(self, maybe: Maybe[T]) -> Maybe[T]:
+        return maybe
+
+    @override
+    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
+        return func()
+
+    @override
+    def unwrap(self) -> T:
+        panic("called Maybe.unwrap() on Nothing")
+
+    @override
+    def unwrap_or(self, default: T) -> T:
+        return default
+
+    @override
+    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+        return func()
+
+
+Nothing = NothingType()
