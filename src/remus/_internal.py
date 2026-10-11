@@ -24,6 +24,7 @@ type Maybe[T] = Some[T] | NothingType[T]
 # ==========================================
 # ===            Panic                 ===
 # ==========================================
+@final
 @dataclass(frozen=True, slots=True)
 class Panic(BaseException):
     message: str
@@ -45,7 +46,8 @@ def _panic_excepthook(  # pragma: no cover
     frames = extract_tb(traceback)[:-1]
     if not frames:
         return print(
-            f"thread '{current_thread().name}' panicked at '{exc}'", file=sys.stderr
+            f"{_PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked at '{exc}'{_PANIC_FONT_RESET}",
+            file=sys.stderr,
         )
 
     print("Traceback (most recent call last):")
