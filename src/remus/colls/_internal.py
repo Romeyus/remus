@@ -1,4 +1,12 @@
-from collections.abc import Callable, Iterable, Iterator, MutableSequence, Sequence
+from collections.abc import (
+    Callable,
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from dataclasses import dataclass, field
 
 from remus import errs
@@ -92,3 +100,16 @@ class MutArray[T](Array[T]):
             return Ok(None)
         except IndexError:
             return Err(errs.IndexErr(index))
+
+
+# ==========================================
+# ===            Maps                 ===
+# ==========================================
+@dataclass(frozen=True, slots=True)
+class Map[K, T]:
+    data: Mapping[K, T] = field(default_factory=dict[K, T])
+
+
+@dataclass(frozen=True, slots=True)
+class MutMap[K, T](Map[K, T]):
+    data: MutableMapping[K, T] = field(default_factory=dict[K, T])
