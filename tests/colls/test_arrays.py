@@ -104,6 +104,13 @@ def test_clear(array: colls.BaseMutArray[int]) -> None:
     assert array == colls.MutArray()
 
 
+def test_extend(array: colls.BaseMutArray[int]) -> None:
+    array.extend([100, 200, 300])
+    assert array[-1] == Ok(300)
+    assert array[-2] == Ok(200)
+    assert array[-3] == Ok(100)
+
+
 def test_insert(array: colls.MutArray[int]) -> None:
     array.insert(0, 100)
     assert array[0] == Ok(100)

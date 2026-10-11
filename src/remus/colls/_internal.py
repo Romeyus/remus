@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, MutableSequence, Sequence
+from collections.abc import Callable, Iterable, Iterator, MutableSequence, Sequence
 from dataclasses import dataclass, field
 from typing import final, override
 
@@ -84,6 +84,10 @@ class BaseMutArray[T](BaseArray[T], ABC):
         max_index = len(self) - 1
         for i in range(max_index + 1):
             del self[max_index - i]
+
+    def extend(self, iterable: Iterable[T]) -> None:
+        for i in iterable:
+            self.append(i)
 
     @abstractmethod
     def insert(self, index: int, value: T) -> None: ...
