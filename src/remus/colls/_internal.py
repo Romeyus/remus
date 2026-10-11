@@ -80,6 +80,12 @@ class BaseMutArray[T](BaseArray[T], ABC):
     def pop(self, index: int) -> Result[T, IndexErr]:
         return self[index].inspect(lambda _: self.__delitem__(index))
 
+    def pop_or(self, index: int, default: T) -> T:
+        return self.pop(index).unwrap_or(default)
+
+    def pop_or_else(self, index: int, default_factory: Callable[[], T]) -> T:
+        return self.pop(index).ok().unwrap_or_else(default_factory)
+
     def prepend(self, value: T) -> None:
         self.insert(0, value)
 

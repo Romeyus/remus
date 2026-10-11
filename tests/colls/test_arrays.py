@@ -112,6 +112,16 @@ def test_pop(array: colls.BaseMutArray[int]) -> None:
     assert array.pop(ARRAY_LENGTH + 1) == Err(colls.IndexErr(ARRAY_LENGTH + 1))
 
 
+def test_pop_or(array: colls.BaseMutArray[int]) -> None:
+    assert array.pop_or(5, 100) == 5
+    assert array.pop_or(ARRAY_LENGTH + 1, 100) == 100
+
+
+def test_pop_or_else(array: colls.BaseMutArray[int]) -> None:
+    assert array.pop_or_else(5, lambda: 100) == 5
+    assert array.pop_or_else(ARRAY_LENGTH + 1, lambda: 100) == 100
+
+
 def test___delitem__(array: colls.MutArray[int]) -> None:
     del array[5]
     assert len(array) == ARRAY_LENGTH - 1
