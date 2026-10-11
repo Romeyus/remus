@@ -101,6 +101,11 @@ def test_map_or_else() -> None:
     )
 
 
+def test_ok() -> None:
+    assert Ok(2).ok() == Some(2)
+    assert Err("nothing here").ok() == Nothing
+
+
 def test_or_() -> None:
     x = Ok(2)
     y = Err("late error")

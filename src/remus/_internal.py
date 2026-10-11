@@ -117,6 +117,10 @@ class _BaseResult[T, E](ABC):
         """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Ok`, otherwise calls `default_factory` with `self.value` and returns the return value of `default_factory`."""
 
     @abstractmethod
+    def ok(self) -> Maybe[T]:
+        """Returns `Some` with `self.value` if `self` is an instance of `Ok`, otherwise returns `Nothing`."""
+
+    @abstractmethod
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
         """
         Returns `result` if `self` is an instance of `Err`, otherwise returns `self`.
@@ -198,6 +202,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         return func(self.value)
 
     @override
+    def ok(self) -> Maybe[T]:
+        return Some(self.value)
+
+    @override
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
         return cast(Result[T, F], self)
 
@@ -273,6 +281,10 @@ class Err[E, T = Any](_BaseResult[T, E]):
         self, func: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
         return default_factory(self.value)
+
+    @override
+    def ok(self) -> Maybe[T]:
+        return Nothing
 
     @override
     def or_[F](self, result: Result[T, F]) -> Result[T, F]:
