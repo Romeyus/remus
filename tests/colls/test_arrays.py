@@ -88,6 +88,12 @@ def test_insert(array: colls.MutArray[int]) -> None:
     assert array[-1] == Ok(300)
 
 
+def test_prepend(array: colls.BaseMutArray[int]) -> None:
+    array.prepend(100)
+    assert array[0] == Ok(100)
+    assert len(array) == ARRAY_LENGTH + 1
+
+
 def test___delitem__(array: colls.MutArray[int]) -> None:
     del array[5]
     assert len(array) == ARRAY_LENGTH - 1

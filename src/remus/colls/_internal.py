@@ -71,6 +71,9 @@ class BaseMutArray[T](BaseArray[T], ABC):
     @abstractmethod
     def insert(self, index: int, value: T) -> None: ...
 
+    def prepend(self, value: T) -> None:
+        self.insert(0, value)
+
     @abstractmethod
     def __delitem__(self, index: int) -> None: ...
 
