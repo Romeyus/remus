@@ -11,12 +11,19 @@ from remus._internal import Err, Ok, Result
 # ==========================================
 class BaseArray[T](ABC):
     @abstractmethod
+    def __contains__(self, value: T) -> bool: ...
+
+    @abstractmethod
     def __getitem__(self, index: int) -> Result[T, IndexErr]: ...
 
 
 @dataclass(frozen=True, slots=True)
 class Array[T](BaseArray[T]):
     data: Sequence[T]
+
+    @override
+    def __contains__(self, value: T) -> bool:
+        return value in self.data
 
     @override
     def __getitem__(self, index: int) -> Result[T, IndexErr]:

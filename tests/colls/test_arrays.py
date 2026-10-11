@@ -10,7 +10,14 @@ def array() -> colls.MutArray[int]:
     return colls.MutArray([i for i in range(ARRAY_LENGTH)])
 
 
-def test___getitem__(array: colls.Array[int]):
+def test___contains__(array: colls.Array[int]) -> None:
+    for i in range(ARRAY_LENGTH):
+        assert i in array
+
+    assert (ARRAY_LENGTH + 1) not in array
+
+
+def test___getitem__(array: colls.Array[int]) -> None:
     for i in range(ARRAY_LENGTH):
         assert array[i] == Ok(i)
 
