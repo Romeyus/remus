@@ -79,6 +79,10 @@ class _BaseResult[T, E](ABC):
         """Calls `func` and returns its return value if self is an instance of `Ok`, otherwise returns `self`."""
 
     @abstractmethod
+    def err(self) -> Maybe[E]:
+        """Returns `Some` with `self.value` if `self` is an instance of `Err`, otherwise returns `Nothing`."""
+
+    @abstractmethod
     def expect(self, message: str) -> T:
         """Returns `self.value` if `self` is an instance of `Ok`, otherwise panics with your custom `message`."""
 
@@ -155,6 +159,10 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         return func(self.value)
 
     @override
+    def err(self) -> Maybe[E]:
+        return Nothing
+
+    @override
     def expect(self, message: str) -> T:
         return self.value
 
@@ -226,6 +234,10 @@ class Err[E, T = Any](_BaseResult[T, E]):
     @override
     def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
         return cast(Result[U, E], self)
+
+    @override
+    def err(self) -> Maybe[E]:
+        return Some(self.value)
 
     @override
     def expect(self, message: str) -> T:

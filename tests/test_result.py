@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from remus import Err, Ok, Result
+from remus import Err, Nothing, Ok, Result, Some
 from remus._internal import Panic
 
 
@@ -33,6 +33,11 @@ def test_and_then() -> None:
     assert Ok(2).and_then(sq_then_to_str) == Ok("4")
     assert Ok(1_000_001).and_then(sq_then_to_str) == Err("overflowed")
     assert Err("not a number").and_then(sq_then_to_str) == Err("not a number")
+
+
+def test_err() -> None:
+    assert Ok(2).err() == Nothing
+    assert Err("failure").err() == Some("failure")
 
 
 def test_expect() -> None:
