@@ -51,6 +51,11 @@ def test_get_or_else(array: colls.BaseArray[int]) -> None:
     assert array.get_or_else(ARRAY_LENGTH + 1, lambda: 100) == 100
 
 
+def test_last(array: colls.BaseArray[int]) -> None:
+    assert array.last() == Some(ARRAY_LENGTH - 1)
+    assert colls.Array().last() == Nothing
+
+
 def test___contains__(array: colls.Array[int]) -> None:
     for i in range(ARRAY_LENGTH):
         assert i in array

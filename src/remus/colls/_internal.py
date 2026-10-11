@@ -29,6 +29,9 @@ class BaseArray[T](ABC):
     def get_or_else(self, index: int, default_factory: Callable[[], T]) -> T:
         return self.get(index).unwrap_or_else(default_factory)
 
+    def last(self) -> Maybe[T]:
+        return self.get(-1)
+
     @abstractmethod
     def __contains__(self, value: T) -> bool: ...
 
