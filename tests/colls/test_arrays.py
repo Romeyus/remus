@@ -147,3 +147,12 @@ def test_remove() -> None:
     result = array.remove(4)
     assert array == colls.MutArray([1, 2, 2, 3, 3])
     assert isinstance(result.value, errs.ValueErr)
+
+
+def test_set(array: colls.MutArray[int]) -> None:
+    result = array.set(0, 100)
+    assert array.get(0) == Some(100)
+    assert result.value is None
+
+    result = array.set(ARRAY_LENGTH + 1, 200)
+    assert result.value == errs.IndexErr(ARRAY_LENGTH + 1)

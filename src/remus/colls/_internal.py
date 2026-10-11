@@ -85,3 +85,10 @@ class MutArray[T](Array[T]):
             return Ok(self.data.remove(value))
         except ValueError:
             return Err(errs.ValueErr(value, "value not in array"))
+
+    def set(self, index: int, value: T) -> Result[None, errs.IndexErr]:
+        try:
+            self.data[index] = value
+            return Ok(None)
+        except IndexError:
+            return Err(errs.IndexErr(index))

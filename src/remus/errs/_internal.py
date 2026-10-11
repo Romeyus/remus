@@ -17,5 +17,5 @@ class ValueErr[T]:
     value: T
     context: str
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return f"{self.context}: {self.value}"
