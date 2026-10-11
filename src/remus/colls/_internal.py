@@ -65,6 +65,9 @@ class Array[T](BaseArray[T]):
 
 
 class BaseMutArray[T](BaseArray[T], ABC):
+    def append(self, value: T) -> None:
+        self.insert(len(self), value)
+
     @abstractmethod
     def insert(self, index: int, value: T) -> None: ...
 
