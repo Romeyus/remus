@@ -1,99 +1,75 @@
-from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable, Iterator, MutableSequence, Sequence
 from dataclasses import dataclass, field
-from typing import final, override
 
-from remus._internal import Err, Maybe, Nothing, Ok, Result, Some, panic
+from remus import errs
+from remus._internal import Err, Maybe, Nothing, Ok, Result, Some
 
 
 # ==========================================
 # ===            Arrays                 ===
 # ==========================================
-class BaseArray[T](ABC):
+@dataclass(frozen=True, slots=True)
+class Array[T]:
+    data: Sequence[T] = field(default_factory=tuple[T])
+
     def count(self, value: T) -> int:
-        hits = 0
-        for i in self:
-            if i == value:
-                hits += 1
-        return hits
+        return self.data.count(value)
 
     def first(self) -> Maybe[T]:
         return self.get(0)
 
     def get(self, index: int) -> Maybe[T]:
-        return self[index].ok()
+        try:
+            return Some(self.data[index])
+        except IndexError:
+            return Nothing
 
     def get_or(self, index: int, default: T) -> T:
-        return self[index].unwrap_or(default)
+        return self.get(index).unwrap_or(default)
 
     def get_or_else(self, index: int, default_factory: Callable[[], T]) -> T:
         return self.get(index).unwrap_or_else(default_factory)
 
     def index(self, value: T) -> Maybe[int]:
-        for i, v in enumerate(self):
-            if v == value:
-                return Some(i)
-        return Nothing
+        try:
+            return Some(self.data.index(value))
+        except ValueError:
+            return Nothing
 
     def last(self) -> Maybe[T]:
         return self.get(-1)
 
-    @abstractmethod
-    def __contains__(self, value: T) -> bool: ...
-
-    @abstractmethod
-    def __getitem__(self, index: int) -> Result[T, IndexErr]: ...
-
-    @abstractmethod
-    def __iter__(self) -> Iterator[T]: ...
-
-    @abstractmethod
-    def __len__(self) -> int: ...
-
-
-@dataclass(frozen=True, slots=True)
-class Array[T](BaseArray[T]):
-    data: Sequence[T] = field(default_factory=tuple[T])
-
-    @override
     def __contains__(self, value: T) -> bool:
         return value in self.data
 
-    @override
-    def __getitem__(self, index: int) -> Result[T, IndexErr]:
-        try:
-            return Ok(self.data[index])
-
-        except IndexError:
-            return Err(IndexErr(index))
-
-    @override
     def __iter__(self) -> Iterator[T]:
         return iter(self.data)
 
-    @override
     def __len__(self) -> int:
         return len(self.data)
 
 
-class BaseMutArray[T](BaseArray[T], ABC):
+@dataclass(frozen=True, slots=True)
+class MutArray[T](Array[T]):
+    data: MutableSequence[T] = field(default_factory=list[T])
+
     def append(self, value: T) -> None:
-        self.insert(len(self), value)
+        self.data.append(value)
 
     def clear(self) -> None:
-        max_index = len(self) - 1
-        for i in range(max_index + 1):
-            del self[max_index - i]
+        self.data.clear()
 
     def extend(self, iterable: Iterable[T]) -> None:
-        for i in iterable:
-            self.append(i)
+        self.data.extend(iterable)
 
-    @abstractmethod
-    def insert(self, index: int, value: T) -> None: ...
+    def insert(self, index: int, value: T) -> None:
+        self.data.insert(index, value)
 
-    def pop(self, index: int) -> Result[T, IndexErr]:
-        return self[index].inspect(lambda _: self.__delitem__(index))
+    def pop(self, index: int) -> Result[T, errs.IndexErr]:
+        try:
+            return Ok(self.data.pop(index))
+        except IndexError:
+            return Err(errs.IndexErr(index))
 
     def pop_or(self, index: int, default: T) -> T:
         return self.pop(index).unwrap_or(default)
@@ -104,48 +80,8 @@ class BaseMutArray[T](BaseArray[T], ABC):
     def prepend(self, value: T) -> None:
         self.insert(0, value)
 
-    def remove(self, value: T) -> None:
-        for i, v in enumerate(self):
-            if v == value:
-                del self[i]
-                break
-
-    @abstractmethod
-    def __delitem__(self, index: int) -> None: ...
-
-    @abstractmethod
-    def __setitem__(self, index: int, value: T) -> None: ...
-
-
-@dataclass(frozen=True, slots=True)
-class MutArray[T](Array[T], BaseMutArray[T]):
-    data: MutableSequence[T] = field(default_factory=list[T])
-
-    @override
-    def insert(self, index: int, value: T) -> None:
-        self.data.insert(index, value)
-
-    @override
-    def __delitem__(self, index: int) -> None:
+    def remove(self, value: T) -> Result[None, errs.ValueErr[T]]:
         try:
-            del self.data[index]
-
-        except IndexError:
-            panic(str(IndexErr(index)))
-
-    @override
-    def __setitem__(self, index: int, value: T) -> None:
-        try:
-            self.data[index] = value
-
-        except IndexError:
-            panic(str(IndexErr(index)))
-
-
-@final
-@dataclass(frozen=True, slots=True)
-class IndexErr:
-    index: int
-
-    def __str__(self) -> str:  # pragma: no cover
-        return f"index out of range: {self.index}"
+            return Ok(self.data.remove(value))
+        except ValueError:
+            return Err(errs.ValueErr(value, "value not in array"))
