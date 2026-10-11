@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterator, MutableSequence, Sequence
 from dataclasses import dataclass, field
 from typing import final, override
 
-from remus._internal import Err, Maybe, Ok, Result, panic
+from remus._internal import Err, Maybe, Nothing, Ok, Result, Some, panic
 
 
 # ==========================================
@@ -28,6 +28,12 @@ class BaseArray[T](ABC):
 
     def get_or_else(self, index: int, default_factory: Callable[[], T]) -> T:
         return self.get(index).unwrap_or_else(default_factory)
+
+    def index(self, value: T) -> Maybe[int]:
+        for i, v in enumerate(self):
+            if v == value:
+                return Some(i)
+        return Nothing
 
     def last(self) -> Maybe[T]:
         return self.get(-1)
