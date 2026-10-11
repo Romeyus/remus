@@ -1,19 +1,41 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections.abc import MutableSequence, Sequence
 from dataclasses import dataclass
+from typing import final, override
+
+from remus._internal import Err, Ok, Result
 
 
 # ==========================================
 # ===            Arrays                 ===
 # ==========================================
-class BaseArray[T](ABC): ...
+class BaseArray[T](ABC):
+    @abstractmethod
+    def __getitem__(self, index: int) -> Result[T, IndexErr]: ...
 
 
 @dataclass(frozen=True, slots=True)
 class Array[T](BaseArray[T]):
     data: Sequence[T]
 
+    @override
+    def __getitem__(self, index: int) -> Result[T, IndexErr]:
+        try:
+            return Ok(self.data[index])
+
+        except IndexError:
+            return Err(IndexErr(index))
+
 
 @dataclass(frozen=True, slots=True)
 class MutArray[T](Array[T], BaseArray[T]):
     data: MutableSequence[T]
+
+
+@final
+@dataclass(frozen=True, slots=True)
+class IndexErr:
+    index: int
+
+    def __str__(self) -> str:  # pragma: no cover
+        return f"index out of range: {self.index}"

@@ -1,3 +1,3 @@
-from remus.colls._internal import Array, BaseArray, MutArray
+from remus.colls._internal import Array, BaseArray, IndexErr, MutArray
 
-__all__ = ("Array", "BaseArray", "MutArray")
+__all__ = ("Array", "BaseArray", "IndexErr", "MutArray")
