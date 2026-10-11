@@ -13,9 +13,15 @@ class IndexErr:
 
 @final
 @dataclass(frozen=True, slots=True)
+class KeyErr[K]:
+    key: K
+
+
+@final
+@dataclass(frozen=True, slots=True)
 class ValueErr[T]:
     value: T
-    context: str
+    reason: str
 
     def __str__(self) -> str:  # pragma: no cover
-        return f"{self.context}: {self.value}"
+        return f"{self.reason}: {self.value}"

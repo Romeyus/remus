@@ -109,7 +109,61 @@ class MutArray[T](Array[T]):
 class Map[K, T]:
     data: Mapping[K, T] = field(default_factory=dict[K, T])
 
+    def items(self) -> Iterable[tuple[K, T]]:
+        return self.data.items()
+
+    def keys(self) -> Iterable[K]:
+        return self.data.keys()
+
+    def get(self, key: K) -> Maybe[T]:
+        value = self.data.get(key)
+        if value is None:
+            return Nothing
+        return Some(value)
+
+    def get_or(self, key: K, default: T) -> T:
+        return self.get(key).unwrap_or(default)
+
+    def get_or_else(self, key: K, default_factory: Callable[[], T]) -> T:
+        return self.get(key).unwrap_or_else(default_factory)
+
+    def values(self) -> Iterable[T]:
+        return self.data.values()
+
+    def __contains__(self, key: K) -> bool:
+        return key in self.data
+
+    def __iter__(self) -> Iterator[K]:
+        return iter(self.data)
+
+    def __len__(self) -> int:
+        return len(self.data)
+
 
 @dataclass(frozen=True, slots=True)
 class MutMap[K, T](Map[K, T]):
     data: MutableMapping[K, T] = field(default_factory=dict[K, T])
+
+    def clear(self) -> None:
+        self.data.clear()
+
+    def pop(self, key: K) -> Result[T, errs.KeyErr[K]]:
+        try:
+            return Ok(self.data.pop(key))
+        except KeyError:
+            return Err(errs.KeyErr(key))
+
+    def pop_or(self, key: K, default: T) -> T:
+        return self.pop(key).unwrap_or(default)
+
+    def pop_or_else(self, key: K, default_factory: Callable[[], T]) -> T:
+        return self.pop(key).ok().unwrap_or_else(default_factory)
+
+    def set(self, key: K, value: T) -> None:
+        self.data[key] = value
+
+    def set_default(self, key: K, default: T) -> T:
+        return self.data.setdefault(key, default)
+
+    def update(self, data: Mapping[K, T]) -> None:
+        self.data.update(data)
