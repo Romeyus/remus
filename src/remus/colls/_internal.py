@@ -89,6 +89,12 @@ class BaseMutArray[T](BaseArray[T], ABC):
     def prepend(self, value: T) -> None:
         self.insert(0, value)
 
+    def remove(self, value: T) -> None:
+        for i, v in enumerate(self):
+            if v == value:
+                del self[i]
+                break
+
     @abstractmethod
     def __delitem__(self, index: int) -> None: ...
 

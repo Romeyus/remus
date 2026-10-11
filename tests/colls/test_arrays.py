@@ -122,6 +122,15 @@ def test_pop_or_else(array: colls.BaseMutArray[int]) -> None:
     assert array.pop_or_else(ARRAY_LENGTH + 1, lambda: 100) == 100
 
 
+def test_remove() -> None:
+    array = colls.MutArray([1, 2, 2, 3, 3, 3])
+    array.remove(3)
+    assert array == colls.MutArray([1, 2, 2, 3, 3])
+
+    array.remove(4)
+    assert array == colls.MutArray([1, 2, 2, 3, 3])
+
+
 def test___delitem__(array: colls.MutArray[int]) -> None:
     del array[5]
     assert len(array) == ARRAY_LENGTH - 1
