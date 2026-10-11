@@ -25,6 +25,11 @@ def test_count(array: colls.BaseArray[int]) -> None:
     assert colls.Array([100] * 10).count(100) == 10
 
 
+def test_first(array: colls.BaseArray[int]) -> None:
+    assert array.first() == Some(0)
+    assert colls.Array().first() == Nothing
+
+
 def test_get(array: colls.BaseArray[int]) -> None:
     for i in range(ARRAY_LENGTH):
         assert array.get(i) == Some(i)

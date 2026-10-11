@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, MutableSequence, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import final, override
 
 from remus._internal import Err, Maybe, Ok, Result, panic
@@ -16,6 +16,9 @@ class BaseArray[T](ABC):
             if i == value:
                 hits += 1
         return hits
+
+    def first(self) -> Maybe[T]:
+        return self.get(0)
 
     def get(self, index: int) -> Maybe[T]:
         return self[index].ok()
@@ -41,7 +44,7 @@ class BaseArray[T](ABC):
 
 @dataclass(frozen=True, slots=True)
 class Array[T](BaseArray[T]):
-    data: Sequence[T]
+    data: Sequence[T] = field(default_factory=tuple[T])
 
     @override
     def __contains__(self, value: T) -> bool:
@@ -83,7 +86,7 @@ class BaseMutArray[T](BaseArray[T], ABC):
 
 @dataclass(frozen=True, slots=True)
 class MutArray[T](Array[T], BaseMutArray[T]):
-    data: MutableSequence[T]
+    data: MutableSequence[T] = field(default_factory=list[T])
 
     @override
     def insert(self, index: int, value: T) -> None:
