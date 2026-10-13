@@ -1,4 +1,3 @@
-from remus import colls, errs
 from remus._internal import Err, Maybe, Nothing, NothingType, Ok, Result, Some, panic
 
 __all__ = (
@@ -9,7 +8,5 @@ __all__ = (
     "Ok",
     "Result",
     "Some",
-    "colls",
-    "errs",
     "panic",
 )

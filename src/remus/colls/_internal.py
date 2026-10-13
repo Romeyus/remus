@@ -9,8 +9,7 @@ from collections.abc import (
 )
 from dataclasses import dataclass, field
 
-from remus import errs
-from remus._internal import Err, Maybe, Nothing, Ok, Result, Some
+from remus import Err, Maybe, Nothing, Ok, Result, Some, errs
 
 
 # ==========================================
