@@ -163,6 +163,3 @@ class MutMap[K, T](Map[K, T]):
 
     def set_default(self, key: K, default: T) -> T:
         return self.data.setdefault(key, default)
-
-    def update(self, data: Mapping[K, T]) -> None:
-        self.data.update(data)
