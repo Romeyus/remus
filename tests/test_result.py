@@ -100,7 +100,7 @@ class TestOk:
         assert ok.ok() == Some(2)
 
     @pytest.mark.parametrize(
-        ("result"),
+        ("result",),
         (
             pytest.param(Ok(100), id="result-is-Ok"),
             pytest.param(Err("late error"), id="result-is-Err"),
