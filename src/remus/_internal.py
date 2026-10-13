@@ -338,8 +338,8 @@ class _BaseMaybe[T](ABC):
         """Returns `self` if `self` is an instance of `Some` and the return value of `predicate` with `self.value` is `True`, otherwise returns `Nothing`."""
 
     @abstractmethod
-    def inspect(self, factory: Callable[[T], Any]) -> Maybe[T]:
-        """Calls `factory` with `self.value` if `self` is an instance of `Some`."""
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        """Calls `func` with `self.value` if `self` is an instance of `Some`."""
 
     @abstractmethod
     def map[U](self, factory: Callable[[T], U]) -> Maybe[U]:
@@ -410,8 +410,8 @@ class Some[T](_BaseMaybe[T]):
         return self if predicate(self.value) else Nothing
 
     @override
-    def inspect(self, factory: Callable[[T], Any]) -> Maybe[T]:
-        factory(self.value)
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
+        func(self.value)
         return self
 
     @override
@@ -479,7 +479,7 @@ class NothingType[T = Any](_BaseMaybe[T]):
         return Nothing
 
     @override
-    def inspect(self, factory: Callable[[T], Any]) -> Maybe[T]:
+    def inspect(self, func: Callable[[T], Any]) -> Maybe[T]:
         return Nothing
 
     @override
