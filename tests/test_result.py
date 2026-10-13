@@ -33,7 +33,7 @@ class TestOk:
         func.assert_called_once_with(2)
 
     def test_err_returns_nothing(self, ok: Result[int, str]) -> None:
-        assert ok.err() == Nothing
+        assert ok.err() is Nothing
 
     def test_expect_returns_unwrapped_value(self, ok: Result[int, str]) -> None:
         assert ok.expect("testing expect") == 2
@@ -225,7 +225,7 @@ class TestErr:
         func.assert_not_called()
 
     def test_ok_returns_nothing(self, err: Result[int, str]) -> None:
-        assert err.ok() == Nothing
+        assert err.ok() is Nothing
 
     @pytest.mark.parametrize(
         ("result",),
