@@ -33,10 +33,6 @@ ignore = ["**/__pycache__"]
 typeCheckingMode = "strict"
 
 [tool.pytest]
-addopts = [
-    "--cov=src/remus",
-    "--cov-report=term-missing",
-    "--import-mode=importlib",
-]
+addopts = ["--import-mode=importlib"]
 pythonpath = ["src"]
 strict = true

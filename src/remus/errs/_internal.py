@@ -16,6 +16,9 @@ class IndexErr:
 class KeyErr[K]:
     key: K
 
+    def __str__(self) -> str:  # pragma: no cover
+        return f"key not found: {self.key}"
+
 
 @final
 @dataclass(frozen=True, slots=True)

@@ -1,3 +1,4 @@
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -6,265 +7,339 @@ from remus import Err, Nothing, Ok, Result, Some
 from remus._internal import Panic
 
 
+# ==========================================
+# ===            Ok Tests                 ===
+# ==========================================
 class TestOk:
     @pytest.fixture
     def ok(self) -> Result[int, str]:
-        return Ok(2)
+        return Ok(42)
 
+    # ===============and_==============
     @pytest.mark.parametrize(
         ("result",),
         (
-            pytest.param(Ok("different result type"), id="result-is-Ok"),
-            pytest.param(Err("late error"), id="result-is-Err"),
+            pytest.param(Ok("success")),
+            pytest.param(Err("failure")),
         ),
     )
-    def test_and_returns_result(
-        self, ok: Result[int, str], result: Result[int, str]
+    def test_and_should_return_result(
+        self, ok: Result[int, str], result: Result[Any, str]
     ) -> None:
         assert ok.and_(result) is result
 
-    def test_and_then_applies_func(self, ok: Result[int, str]) -> None:
-        assert ok.and_then(lambda v: Ok(v * 50)) == Ok(100)
+    # ===============and_then==============
+    def test_and_then_should_return_factory_product(self, ok: Result[int, str]) -> None:
+        assert ok.and_then(lambda v: Ok(str(v * 2))) == Ok("84")
 
-    def test_and_then_calls_func_with_value(
-        self, ok: Result[int, str], func: mock.Mock
+    def test_and_then_should_call_factory_with_inner_value(
+        self, ok: Result[int, str], factory: mock.Mock
     ) -> None:
-        ok.and_then(func)
-        func.assert_called_once_with(2)
+        ok.and_then(factory)
+        factory.assert_called_once_with(42)
 
-    def test_err_returns_nothing(self, ok: Result[int, str]) -> None:
+    # ===============err==============
+    def test_err_should_return_nothing(self, ok: Result[int, str]) -> None:
         assert ok.err() is Nothing
 
-    def test_expect_returns_unwrapped_value(self, ok: Result[int, str]) -> None:
-        assert ok.expect("testing expect") == 2
+    # ===============expect==============
+    def test_expect_should_return_inner_value(self, ok: Result[int, str]) -> None:
+        assert ok.expect("testing expect") == 42
 
-    def test_expect_err_panics_with_message(self, ok: Result[int, str]) -> None:
+    # ===============expect_err==============
+    def test_expect_err_should_panic_with_message(self, ok: Result[int, str]) -> None:
         with pytest.raises(Panic, match="testing expect_err"):
             ok.expect_err("testing expect_err")
 
-    def test_inspect_calls_func_with_value(
+    # ===============inspect==============
+    def test_inspect_should_return_self(self, ok: Result[int, str]) -> None:
+        assert ok.inspect(print) is ok
+
+    def test_inspect_should_call_func_with_inner_value(
         self, ok: Result[int, str], func: mock.Mock
     ) -> None:
         ok.inspect(func)
-        func.assert_called_once_with(2)
+        func.assert_called_once_with(42)
 
-    def test_inspect_err_does_not_call_func(
+    # ===============inspect_err==============
+    def test_inspect_err_should_return_self(self, ok: Result[int, str]) -> None:
+        assert ok.inspect_err(print) is ok
+
+    def test_inspect_err_should_not_call_func(
         self, ok: Result[int, str], func: mock.Mock
     ) -> None:
         ok.inspect_err(func)
         func.assert_not_called()
 
-    def test_map_applies_func(self, ok: Result[int, str]) -> None:
-        assert ok.map(lambda v: v**2) == Ok(4)
-
-    def test_map_calls_func_with_value(
-        self, ok: Result[int, str], func: mock.Mock
+    # ===============map==============
+    def test_map_should_return_ok_containing_factory_product(
+        self, ok: Result[int, str]
     ) -> None:
-        ok.map(func)
-        func.assert_called_once_with(2)
+        assert ok.map(lambda v: v % 2 == 0) == Ok(True)
 
-    def test_map_err_returns_self(self, ok: Result[int, str]) -> None:
-        assert ok.map_err(lambda v: v.upper()) is ok
-
-    def test_map_err_does_not_call_func(
-        self, ok: Result[int, str], func: mock.Mock
+    def test_map_should_call_factory_with_inner_value(
+        self, ok: Result[int, str], factory: mock.Mock
     ) -> None:
-        ok.map_err(func)
-        func.assert_not_called()
+        ok.map(factory)
+        factory.assert_called_once_with(42)
 
-    def test_map_or_applies_func(self, ok: Result[int, str]) -> None:
-        assert ok.map_or(lambda v: v**2, 42) == 4
+    # ===============map_err==============
+    def test_map_err_should_return_self(self, ok: Result[int, str]) -> None:
+        assert ok.map_err(str.upper) is ok
 
-    def test_map_or_calls_func_with_value(
-        self, ok: Result[int, str], func: mock.Mock
+    def test_map_err_should_not_call_factory(
+        self, ok: Result[int, str], factory: mock.Mock
     ) -> None:
-        ok.map_or(func, 42)
-        func.assert_called_once_with(2)
+        ok.map_err(factory)
+        factory.assert_not_called()
 
-    def test_map_or_else_applies_func(self, ok: Result[int, str]) -> None:
-        assert ok.map_or_else(lambda v: v**2, lambda e: len(e)) == 4
+    # ===============map_or==============
+    def test_map_or_should_return_factory_product(self, ok: Result[int, str]) -> None:
+        assert ok.map_or(lambda v: v % 2 == 0, False) is True
 
-    def test_map_or_else_calls_func_with_value(
-        self, ok: Result[int, str], func: mock.Mock
+    def test_map_or_should_call_factory_with_inner_value(
+        self, ok: Result[int, str], factory: mock.Mock
     ) -> None:
-        ok.map_or_else(func, lambda e: len(e))
-        func.assert_called_once_with(2)
+        ok.map_or(factory, False)
+        factory.assert_called_once_with(42)
 
-    def test_map_or_else_does_not_call_default_factory(
-        self, ok: Result[int, str], func: mock.Mock
+    # ===============map_or_else==============
+    def test_map_or_else_should_return_factory_product(
+        self, ok: Result[int, str]
     ) -> None:
-        ok.map_or_else(lambda v: v**2, func)
-        func.assert_not_called()
+        assert ok.map_or_else(lambda v: v % 2 == 0, bool) is True
 
-    def test_ok_returns_some_with_value(self, ok: Result[int, str]) -> None:
-        assert ok.ok() == Some(2)
+    def test_map_or_else_should_call_factory_with_inner_value(
+        self, ok: Result[int, str], factory: mock.Mock
+    ) -> None:
+        ok.map_or_else(factory, bool)
+        factory.assert_called_once_with(42)
 
+    def test_map_or_else_should_not_call_default_factory(
+        self, ok: Result[int, str], factory: mock.Mock
+    ) -> None:
+        ok.map_or_else(lambda v: v % 2 == 0, factory)
+        factory.assert_not_called()
+
+    # ===============ok==============
+    def test_ok_should_return_some_containing_inner_value(
+        self, ok: Result[int, str]
+    ) -> None:
+        assert ok.ok() == Some(42)
+
+    # ===============or_==============
     @pytest.mark.parametrize(
         ("result",),
         (
-            pytest.param(Ok(100), id="result-is-Ok"),
-            pytest.param(Err("late error"), id="result-is-Err"),
+            pytest.param(Ok("success")),
+            pytest.param(Err("failure")),
         ),
     )
-    def test_or_returns_self(
-        self, ok: Result[int, str], result: Result[int, str]
+    def test_or_should_return_self(
+        self, ok: Result[int, str], result: Result[Any, str]
     ) -> None:
         assert ok.or_(result) is ok
 
-    def test_or_else_returns_self(self, ok: Result[int, str]) -> None:
+    # ===============or_else==============
+    def test_or_else_should_return_self(self, ok: Result[int, str]) -> None:
         assert ok.or_else(lambda v: Err(v.upper())) is ok
 
-    def test_or_else_does_not_call_func(
-        self, ok: Result[int, str], func: mock.Mock
+    def test_or_else_should_not_call_factory(
+        self, ok: Result[int, str], factory: mock.Mock
     ) -> None:
-        ok.or_else(func)
-        func.assert_not_called()
+        ok.or_else(factory)
+        factory.assert_not_called()
 
-    def test_unwrap_returns_unwrapped_value(self, ok: Result[int, str]) -> None:
-        assert ok.unwrap() == 2
+    # ===============unwrap==============
+    def test_unwrap_should_return_inner_value(self, ok: Result[int, str]) -> None:
+        assert ok.unwrap() == 42
 
-    def test_unwrap_err_panics(self, ok: Result[int, str]) -> None:
+    # ===============unwrap_err==============
+    def test_unwrap_err_should_panic(self, ok: Result[int, str]) -> None:
         with pytest.raises(Panic):
             ok.unwrap_err()
 
-    def test_unwrap_or_returns_unwrapped_value(self, ok: Result[int, str]) -> None:
-        assert ok.unwrap_or(42) == 2
+    # ===============unwrap_or==============
+    def test_unwrap_or_should_return_inner_value(self, ok: Result[int, str]) -> None:
+        assert ok.unwrap_or(100) == 42
 
-    def test_unwrap_or_else_returns_unwrapped_value(self, ok: Result[int, str]) -> None:
-        assert ok.unwrap_or_else(lambda _: 42) == 2
-
-    def test_unwrap_or_else_does_not_call_func(
-        self, ok: Result[int, str], func: mock.Mock
+    # ===============unwrap_or_else==============
+    def test_unwrap_or_else_should_return_inner_value(
+        self, ok: Result[int, str]
     ) -> None:
-        ok.unwrap_or_else(func)
-        func.assert_not_called()
+        assert ok.unwrap_or_else(int) == 42
+
+    def test_unwrap_or_else_should_not_call_default_factory(
+        self, ok: Result[int, str], factory: mock.Mock
+    ) -> None:
+        ok.unwrap_or_else(factory)
+        factory.assert_not_called()
 
 
+# ==========================================
+# ===            Err Tests                 ===
+# ==========================================
 class TestErr:
     @pytest.fixture
     def err(self) -> Result[int, str]:
         return Err("failure")
 
+    # ===============and_==============
     @pytest.mark.parametrize(
         ("result",),
         (
-            pytest.param(Ok("foo"), id="result-is-Ok"),
-            pytest.param(Err("late error"), id="result-is-Err"),
+            pytest.param(Ok("success")),
+            pytest.param(Err(500)),
         ),
     )
-    def test_and_returns_self(
-        self, err: Result[int, str], result: Result[str, str]
+    def test_and_should_return_self(
+        self, err: Result[int, str], result: Result[Any, str]
     ) -> None:
         assert err.and_(result) is err
 
-    def test_and_then_returns_self(self, err: Result[int, str]) -> None:
-        assert err.and_then(lambda v: Ok(v**2)) is err
+    # ===============and_then==============
+    def test_and_then_should_return_self(self, err: Result[int, str]) -> None:
+        assert err.and_then(lambda v: Ok(str(v * 2))) is err
 
-    def test_and_then_does_not_call_func(
-        self, err: Result[int, str], func: mock.Mock
+    def test_and_then_should_not_call_factory(
+        self, err: Result[int, str], factory: mock.Mock
     ) -> None:
-        err.and_then(func)
-        func.assert_not_called()
+        err.and_then(factory)
+        factory.assert_not_called()
 
-    def test_err_returns_some_with_value(self, err: Result[int, str]) -> None:
+    # ===============err==============
+    def test_err_should_return_some_containing_inner_value(
+        self, err: Result[int, str]
+    ) -> None:
         assert err.err() == Some("failure")
 
-    def test_expect_panics_with_message(self, err: Result[int, str]) -> None:
+    # ===============expect==============
+    def test_expect_should_panic_with_message(self, err: Result[int, str]) -> None:
         with pytest.raises(Panic, match="testing expect"):
             err.expect("testing expect")
 
-    def test_expect_err_returns_unwrapped_value(self, err: Result[int, str]) -> None:
+    # ===============expect_err==============
+    def test_expect_err_should_return_inner_value(self, err: Result[int, str]) -> None:
         assert err.expect_err("testing expect_err") == "failure"
 
-    def test_inspect_does_not_call_func(
+    # ===============inspect==============
+    def test_inspect_should_return_self(self, err: Result[int, str]) -> None:
+        assert err.inspect(print) is err
+
+    def test_inspect_should_not_call_func(
         self, err: Result[int, str], func: mock.Mock
     ) -> None:
         err.inspect(func)
         func.assert_not_called()
 
-    def test_inspect_err_calls_func_with_value(
+    # ===============inspect_err==============
+    def test_inspect_err_should_return_self(self, err: Result[int, str]) -> None:
+        assert err.inspect_err(print) is err
+
+    def test_inspect_err_should_call_func_with_inner_value(
         self, err: Result[int, str], func: mock.Mock
     ) -> None:
         err.inspect_err(func)
         func.assert_called_once_with("failure")
 
-    def test_map_returns_self(self, err: Result[int, str]) -> None:
-        assert err.map(lambda v: v**2) is err
+    # ===============map==============
+    def test_map_should_return_self(self, err: Result[int, str]) -> None:
+        assert err.map(lambda v: v % 2 == 0) is err
 
-    def test_map_does_not_call_func(
-        self, err: Result[int, str], func: mock.Mock
+    def test_map_should_not_call_factory(
+        self, err: Result[int, str], factory: mock.Mock
     ) -> None:
-        err.map(func)
-        func.assert_not_called()
+        err.map(factory)
+        factory.assert_not_called()
 
-    def test_map_err_applies_func(self, err: Result[int, str]) -> None:
-        assert err.map_err(lambda v: v.upper()) == Err("FAILURE")
-
-    def test_map_calls_func_with_value(
-        self, err: Result[int, str], func: mock.Mock
+    # ===============map_err==============
+    def test_map_err_should_return_err_containing_factory_product(
+        self, err: Result[int, str]
     ) -> None:
-        err.map_err(func)
-        func.assert_called_once_with("failure")
+        assert err.map_err(str.upper) == Err("FAILURE")
 
-    def test_map_or_returns_default(self, err: Result[int, str]) -> None:
-        assert err.map_or(lambda v: v**2, 42) == 42
-
-    def test_map_or_else_applies_default_factory(self, err: Result[int, str]) -> None:
-        assert err.map_or_else(lambda v: v**2, lambda e: len(e)) == 7
-
-    def test_map_or_else_calls_default_factory_with_value(
-        self, err: Result[int, str], func: mock.Mock
+    def test_map_err_should_call_factory_with_inner_value(
+        self, err: Result[int, str], factory: mock.Mock
     ) -> None:
-        err.map_or_else(lambda v: v**2, func)
-        func.assert_called_once_with("failure")
+        err.map_err(factory)
+        factory.assert_called_once_with("failure")
 
-    def test_map_or_else_does_not_call_func(
-        self, err: Result[int, str], func: mock.Mock
+    # ===============map_or==============
+    def test_map_or_should_return_default(self, err: Result[int, str]) -> None:
+        assert err.map_or(lambda v: v % 2 == 0, False) is False
+
+    def test_map_or_should_not_call_factory(
+        self, err: Result[int, str], factory: mock.Mock
     ) -> None:
-        err.map_or_else(func, lambda e: len(e))
-        func.assert_not_called()
+        err.map_or(factory, False)
+        factory.assert_not_called()
 
-    def test_ok_returns_nothing(self, err: Result[int, str]) -> None:
+    # ===============map_or_else==============
+    def test_map_or_else_should_return_default_factory_product(
+        self, err: Result[int, str]
+    ) -> None:
+        assert err.map_or_else(lambda v: v % 2 == 0, len) == 7
+
+    def test_map_or_else_should_call_default_factory_with_inner_value(
+        self, err: Result[int, str], factory: mock.Mock
+    ) -> None:
+        err.map_or_else(bool, factory)
+        factory.assert_called_once_with("failure")
+
+    def test_map_or_else_should_not_call_factory(
+        self, err: Result[int, str], factory: mock.Mock
+    ) -> None:
+        err.map_or_else(factory, len)
+        factory.assert_not_called()
+
+    # ===============ok==============
+    def test_ok_should_return_nothing(self, err: Result[int, str]) -> None:
         assert err.ok() is Nothing
 
+    # ===============or_==============
     @pytest.mark.parametrize(
         ("result",),
         (
-            pytest.param(Ok(2), id="result-is-Ok"),
-            pytest.param(Err("late error"), id="result-is-Err"),
+            pytest.param(Ok("success")),
+            pytest.param(Err(500)),
         ),
     )
-    def test_or_returns_result(
-        self, err: Result[int, str], result: Result[int, str]
+    def test_or_should_return_result(
+        self, err: Result[int, str], result: Result[Any, str]
     ) -> None:
         assert err.or_(result) is result
 
-    def test_or_else_returns_applies_func(self, err: Result[int, str]) -> None:
+    # ===============or_else==============
+    def test_or_else_should_return_factory_product(self, err: Result[int, str]) -> None:
         assert err.or_else(lambda v: Ok(len(v))) == Ok(7)
 
-    def test_or_else_calls_func_with_value(
-        self, err: Result[int, str], func: mock.Mock
+    def test_or_else_should_call_factory_with_inner_value(
+        self, err: Result[int, str], factory: mock.Mock
     ) -> None:
-        err.or_else(func)
-        func.assert_called_once_with("failure")
+        err.or_else(factory)
+        factory.assert_called_once_with("failure")
 
-    def test_unwrap_panics(self, err: Result[int, str]) -> None:
+    # ===============unwrap==============
+    def test_unwrap_should_panic(self, err: Result[int, str]) -> None:
         with pytest.raises(Panic):
             err.unwrap()
 
-    def test_unwrap_err_returns_unwrapped_value(self, err: Result[int, str]) -> None:
+    # ===============unwrap_err==============
+    def test_unwrap_err_should_return_inner_value(self, err: Result[int, str]) -> None:
         assert err.unwrap_err() == "failure"
 
-    def test_unwrap_or_returns_default(self, err: Result[int, str]) -> None:
-        assert err.unwrap_or(42) == 42
+    # ===============unwrap_or==============
+    def test_unwrap_or_should_return_default(self, err: Result[int, str]) -> None:
+        assert err.unwrap_or(100) == 100
 
-    def test_unwrap_or_else_applies_default_factory(
+    # ===============unwrap_or_else==============
+    def test_unwrap_or_else_should_return_default_factory_product(
         self, err: Result[int, str]
     ) -> None:
-        assert err.unwrap_or_else(lambda v: len(v)) == 7
+        assert err.unwrap_or_else(len) == 7
 
-    def test_unwrap_or_else_calls_default_factory_with_value(
-        self, err: Result[int, str], func: mock.Mock
+    def test_unwrap_or_else_should_call_default_factory_with_inner_value(
+        self, err: Result[int, str], factory: mock.Mock
     ) -> None:
-        err.unwrap_or_else(func)
-        func.assert_called_once_with("failure")
+        err.unwrap_or_else(factory)
+        factory.assert_called_once_with("failure")

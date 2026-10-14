@@ -1,158 +1,272 @@
+from unittest import mock
+
 import pytest
 
 from remus import Err, Nothing, Ok, Some, colls, errs
 
-# ==========================================
-# ===            Constants                 ===
-# ==========================================
-ARRAY_LENGTH = 10
-
-
-@pytest.fixture
-def array() -> colls.MutArray[int]:
-    return colls.MutArray([i for i in range(ARRAY_LENGTH)])
-
 
 # ==========================================
-# ===            Array                 ===
+# ===            Array Tests                 ===
 # ==========================================
-def test_count(array: colls.Array[int]) -> None:
-    for i in range(ARRAY_LENGTH):
-        assert array.count(i) == 1
+class TestArray:
+    @pytest.fixture
+    def array(self) -> colls.Array[str]:
+        return colls.Array(
+            (
+                "apple",
+                "banana",
+                "orange",
+                "banana",
+            )
+        )
 
-    assert array.count(ARRAY_LENGTH + 1) == 0
-    assert colls.Array([100] * 10).count(100) == 10
+    # ===============count==============
+    @pytest.mark.parametrize(
+        ("value", "count"),
+        (
+            pytest.param("apple", 1),
+            pytest.param("banana", 2),
+            pytest.param("orange", 1),
+        ),
+    )
+    def test_count_should_return_number_of_times_value_in_array(
+        self, array: colls.Array[str], value: str, count: int
+    ) -> None:
+        assert array.count(value) == count
 
+    # ===============first==============
+    def test_first_should_return_some_containing_first_value_in_array(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.first() == Some("apple")
 
-def test_first(array: colls.Array[int]) -> None:
-    assert array.first() == Some(0)
-    assert colls.Array().first() == Nothing
+    def test_first_should_return_nothing_if_array_is_empty(self) -> None:
+        assert colls.Array().first() is Nothing
 
+    # ===============get==============
+    @pytest.mark.parametrize(
+        ("index", "value"),
+        (
+            pytest.param(0, "apple"),
+            pytest.param(1, "banana"),
+            pytest.param(2, "orange"),
+            pytest.param(3, "banana"),
+        ),
+    )
+    def test_get_should_return_some_containing_value_if_index_in_range(
+        self, array: colls.Array[str], index: int, value: str
+    ) -> None:
+        assert array.get(index) == Some(value)
 
-def test_get(array: colls.Array[int]) -> None:
-    for i in range(ARRAY_LENGTH):
-        assert array.get(i) == Some(i)
+    def test_get_should_return_nothing_if_index_out_of_range(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.get(42) is Nothing
 
-    assert array.get(ARRAY_LENGTH + 1) == Nothing
+    # ===============get_or==============
+    def test_get_or_should_return_value_if_index_in_range(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.get_or(0, "mango") == "apple"
 
+    def test_get_or_should_return_default_if_index_out_of_range(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.get_or(42, "mango") == "mango"
 
-def test_get_or(array: colls.Array[int]) -> None:
-    for i in range(ARRAY_LENGTH):
-        assert array.get_or(i, 100) == i
+    # ===============get_or_else==============
+    def test_get_or_else_should_return_value_if_index_in_range(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.get_or_else(1, lambda: "mango") == "banana"
 
-    assert array.get_or(ARRAY_LENGTH + 1, 100) == 100
+    def test_get_or_else_should_return_default_factory_product_if_index_out_of_range(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.get_or_else(42, lambda: "mango") == "mango"
 
+    def test_get_or_else_should_call_default_factory_if_index_out_of_range(
+        self, array: colls.Array[str], factory: mock.Mock
+    ) -> None:
+        array.get_or_else(42, factory)
+        factory.assert_called_once()
 
-def test_get_or_else(array: colls.Array[int]) -> None:
-    for i in range(ARRAY_LENGTH):
-        assert array.get_or_else(i, lambda: 100) == i
+    def test_get_or_else_should_not_call_default_factory_if_index_in_range(
+        self, array: colls.Array[str], factory: mock.Mock
+    ) -> None:
+        array.get_or_else(0, factory)
+        factory.assert_not_called()
 
-    assert array.get_or_else(ARRAY_LENGTH + 1, lambda: 100) == 100
+    # ===============index==============
+    @pytest.mark.parametrize(
+        ("value", "index"),
+        (
+            pytest.param("apple", 0),
+            pytest.param("banana", 1),
+            pytest.param("orange", 2),
+        ),
+    )
+    def test_index_should_return_some_containing_first_index_if_value_in_array(
+        self, array: colls.Array[str], value: str, index: int
+    ) -> None:
+        assert array.index(value) == Some(index)
 
+    def test_index_should_return_nothing_if_value_not_in_array(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.index("mango") is Nothing
 
-def test_index(array: colls.Array[int]) -> None:
-    for i in range(ARRAY_LENGTH):
-        assert array.index(i) == Some(i)
+    # ===============last==============
+    def test_last_should_return_some_containing_last_value_in_array(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert array.last() == Some("banana")
 
-    assert array.index(ARRAY_LENGTH + 1) == Nothing
+    def test_last_should_return_nothing_if_array_is_empty(self) -> None:
+        assert colls.Array().last() is Nothing
 
+    # ===============__contains__==============
+    def test__contains__should_return_true_if_value_in_array(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert "apple" in array
 
-def test_last(array: colls.Array[int]) -> None:
-    assert array.last() == Some(ARRAY_LENGTH - 1)
-    assert colls.Array().last() == Nothing
+    def test__contains__should_return_false_if_value_not_in_array(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert "mango" not in array
 
+    # ===============__iter__==============
+    def test__iter__should_return_iterator_of_values(
+        self, array: colls.Array[str]
+    ) -> None:
+        assert list(iter(array)) == ["apple", "banana", "orange", "banana"]
 
-def test___contains__(array: colls.Array[int]) -> None:
-    for i in range(ARRAY_LENGTH):
-        assert i in array
-
-    assert (ARRAY_LENGTH + 1) not in array
-
-
-def test___iter__(array: colls.Array[int]) -> None:
-    assert list(iter(array)) == [i for i in range(ARRAY_LENGTH)]
-
-
-def test___len__(array: colls.Array[int]) -> None:
-    assert len(array) == ARRAY_LENGTH
+    # ===============__len__==============
+    def test__len__should_return_length_of_array(self, array: colls.Array[str]) -> None:
+        assert len(array) == 4
 
 
 # ==========================================
-# ===            MutArray                 ===
+# ===            MutArray Tests                 ===
 # ==========================================
-def test_append(array: colls.MutArray[int]) -> None:
-    array.append(100)
-    assert array.get(-1) == Some(100)
-    assert len(array) == ARRAY_LENGTH + 1
+class TestMutArray:
+    @pytest.fixture
+    def array(self) -> colls.MutArray[str]:
+        return colls.MutArray(
+            [
+                "apple",
+                "banana",
+                "orange",
+                "banana",
+            ]
+        )
 
+    # ===============append==============
+    def test_append_should_add_value_to_end_of_array(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        array.append("mango")
+        assert array.last() == Some("mango")
 
-def test_clear(array: colls.MutArray[int]) -> None:
-    array.clear()
-    for i in range(ARRAY_LENGTH):
-        assert i not in array
+    # ===============clear==============
+    def test_clear_should_remove_all_values_from_array(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        array.clear()
+        assert len(array) == 0
 
-    array = colls.MutArray()
-    array.clear()
-    assert array == colls.MutArray()
+    # ===============insert==============
+    def test_insert_should_add_value_at_index(self, array: colls.MutArray[str]) -> None:
+        array.insert(2, "mango")
+        assert array.get(2) == Some("mango")
 
+    # ===============pop==============
+    @pytest.mark.parametrize(
+        ("index", "value"),
+        (
+            pytest.param(0, "apple"),
+            pytest.param(1, "banana"),
+            pytest.param(2, "orange"),
+            pytest.param(3, "banana"),
+        ),
+    )
+    def test_pop_should_return_ok_containing_value_if_index_in_range(
+        self, array: colls.MutArray[str], index: int, value: str
+    ) -> None:
+        assert array.pop(index) == Ok(value)
 
-def test_extend(array: colls.MutArray[int]) -> None:
-    array.extend([100, 200, 300])
-    assert array.get(-1) == Some(300)
-    assert array.get(-2) == Some(200)
-    assert array.get(-3) == Some(100)
+    def test_pop_should_return_err_containing_index_err_if_index_out_of_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.pop(42) == Err(errs.IndexErr(42))
 
+    def test_pop_should_remove_value_if_index_in_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        array.pop(0)
+        assert "apple" not in array
 
-def test_insert(array: colls.MutArray[int]) -> None:
-    array.insert(0, 100)
-    assert array.get(0) == Some(100)
+    # ===============pop_or==============
+    def test_pop_or_should_return_value_if_index_in_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.pop_or(1, "mango") == "banana"
 
-    array.insert(5, 200)
-    assert array.get(5) == Some(200)
+    def test_pop_or_should_return_default_if_index_out_of_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.pop_or(42, "mango") == "mango"
 
-    array.insert(len(array), 300)
-    assert array.get(-1) == Some(300)
+    # ===============pop_or_else==============
+    def test_pop_or_else_should_return_value_if_index_in_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.pop_or_else(2, lambda: "pear") == "orange"
 
+    def test_pop_or_else_should_return_default_factory_product_if_index_out_of_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.pop_or_else(42, lambda: "pear") == "pear"
 
-def test_prepend(array: colls.MutArray[int]) -> None:
-    array.prepend(100)
-    assert array.get(0) == Some(100)
-    assert len(array) == ARRAY_LENGTH + 1
+    def test_pop_or_else_should_call_default_factory_if_index_out_of_range(
+        self, array: colls.MutArray[str], factory: mock.Mock
+    ) -> None:
+        array.pop_or_else(42, factory)
+        factory.assert_called_once()
 
+    def test_pop_or_else_should_not_call_default_factory_if_index_in_range(
+        self, array: colls.MutArray[str], factory: mock.Mock
+    ) -> None:
+        array.pop_or_else(0, factory)
+        factory.assert_not_called()
 
-def test_pop(array: colls.MutArray[int]) -> None:
-    assert array.pop(5) == Ok(5)
-    assert 5 not in array
-    assert len(array) == ARRAY_LENGTH - 1
+    # ===============prepend==============
+    def test_prepend_should_add_value_to_start_of_array(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        array.prepend("mango")
+        assert array.first() == Some("mango")
 
-    assert array.pop(ARRAY_LENGTH + 1) == Err(errs.IndexErr(ARRAY_LENGTH + 1))
+    # ===============remove==============
+    def test_remove_should_return_ok_containing_none_if_value_in_array(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.remove("banana") == Ok(None)
 
+    def test_remove_should_return_err_containing_index_err_if_value_not_in_array(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        result = array.remove("mango")
+        assert isinstance(result, Err) and result.value.value == "mango"
 
-def test_pop_or(array: colls.MutArray[int]) -> None:
-    assert array.pop_or(5, 100) == 5
-    assert array.pop_or(ARRAY_LENGTH + 1, 100) == 100
+    # ===============set==============
+    def test_set_should_return_some_containing_none_if_index_in_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.set(1, "peach") == Ok(None)
 
-
-def test_pop_or_else(array: colls.MutArray[int]) -> None:
-    assert array.pop_or_else(5, lambda: 100) == 5
-    assert array.pop_or_else(ARRAY_LENGTH + 1, lambda: 100) == 100
-
-
-def test_remove() -> None:
-    array = colls.MutArray([1, 2, 2, 3, 3, 3])
-    result = array.remove(3)
-    assert array == colls.MutArray([1, 2, 2, 3, 3])
-    assert result.value is None
-
-    result = array.remove(4)
-    assert array == colls.MutArray([1, 2, 2, 3, 3])
-    assert isinstance(result.value, errs.ValueErr)
-
-
-def test_set(array: colls.MutArray[int]) -> None:
-    result = array.set(0, 100)
-    assert array.get(0) == Some(100)
-    assert result.value is None
-
-    result = array.set(ARRAY_LENGTH + 1, 200)
-    assert result.value == errs.IndexErr(ARRAY_LENGTH + 1)
+    def test_set_should_return_err_containing_index_err_if_index_out_of_range(
+        self, array: colls.MutArray[str]
+    ) -> None:
+        assert array.set(42, "peach") == Err(errs.IndexErr(42))

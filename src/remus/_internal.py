@@ -77,8 +77,8 @@ class _BaseResult[T, E](ABC):
         """
 
     @abstractmethod
-    def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
-        """Calls `func` and returns its return value if self is an instance of `Ok`, otherwise returns `self`."""
+    def and_then[U](self, factory: Callable[[T], Result[U, E]]) -> Result[U, E]:
+        """Calls `factory` and returns its return value if self is an instance of `Ok`, otherwise returns `self`."""
 
     @abstractmethod
     def err(self) -> Maybe[E]:
@@ -101,22 +101,22 @@ class _BaseResult[T, E](ABC):
         """Calls `func` with `self.value` if `self` is an instance of `Err`."""
 
     @abstractmethod
-    def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
-        """Calls `func` with `self.value` and returns a new `Ok` instance with the return value of `func` if `self` is an instance of `Ok`, otherwise returns `self`."""
+    def map[U](self, factory: Callable[[T], U]) -> Result[U, E]:
+        """Calls `factory` with `self.value` and returns a new `Ok` instance with the return value of `factory` if `self` is an instance of `Ok`, otherwise returns `self`."""
 
     @abstractmethod
-    def map_err[F](self, func: Callable[[E], F]) -> Result[T, F]:
-        """Calls `func` with `self.value` and returns a new `Err` instance with the return value of `func` if `self` is an instance of `Err`, otherwise returns `self`."""
+    def map_err[F](self, factory: Callable[[E], F]) -> Result[T, F]:
+        """Calls `factory` with `self.value` and returns a new `Err` instance with the return value of `factory` if `self` is an instance of `Err`, otherwise returns `self`."""
 
     @abstractmethod
-    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
-        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Ok`, otherwise returns `default`."""
+    def map_or[U](self, factory: Callable[[T], U], default: U) -> U:
+        """Calls `factory` with `self.value` and returns the return value of `factory` if `self` is an instance of `Ok`, otherwise returns `default`."""
 
     @abstractmethod
     def map_or_else[U](
-        self, func: Callable[[T], U], default_factory: Callable[[E], U]
+        self, factory: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
-        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Ok`, otherwise calls `default_factory` with `self.value` and returns the return value of `default_factory`."""
+        """Calls `factory` with `self.value` and returns the return value of `factory` if `self` is an instance of `Ok`, otherwise calls `default_factory` with `self.value` and returns the return value of `default_factory`."""
 
     @abstractmethod
     def ok(self) -> Maybe[T]:
@@ -131,8 +131,8 @@ class _BaseResult[T, E](ABC):
         """
 
     @abstractmethod
-    def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
-        """Calls `func` and returns its return value if self is an instance of `Err`, otherwise returns `self`."""
+    def or_else[F](self, factory: Callable[[E], Result[T, F]]) -> Result[T, F]:
+        """Calls `factory` and returns its return value if self is an instance of `Err`, otherwise returns `self`."""
 
     @abstractmethod
     def unwrap(self) -> T:
@@ -147,8 +147,8 @@ class _BaseResult[T, E](ABC):
         """Returns `self.value` if `self` is an instance of `Ok`, otherwise returns `default`."""
 
     @abstractmethod
-    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
-        """Returns `self.value` if `self` is an instance of `Ok`, otherwise calls `func` with `self.value` and returns the return value of `func`."""
+    def unwrap_or_else(self, default_factory: Callable[[E], T]) -> T:
+        """Returns `self.value` if `self` is an instance of `Ok`, otherwise calls `default_factory` with `self.value` and returns the return value of `default_factory`."""
 
 
 @final
@@ -161,8 +161,8 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         return result
 
     @override
-    def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
-        return func(self.value)
+    def and_then[U](self, factory: Callable[[T], Result[U, E]]) -> Result[U, E]:
+        return factory(self.value)
 
     @override
     def err(self) -> Maybe[E]:
@@ -186,22 +186,22 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         return self
 
     @override
-    def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
-        return Ok(func(self.value))
+    def map[U](self, factory: Callable[[T], U]) -> Result[U, E]:
+        return Ok(factory(self.value))
 
     @override
-    def map_err[F](self, func: Callable[[E], F]) -> Result[T, F]:
+    def map_err[F](self, factory: Callable[[E], F]) -> Result[T, F]:
         return cast(Result[T, F], self)
 
     @override
-    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
-        return func(self.value)
+    def map_or[U](self, factory: Callable[[T], U], default: U) -> U:
+        return factory(self.value)
 
     @override
     def map_or_else[U](
-        self, func: Callable[[T], U], default_factory: Callable[[E], U]
+        self, factory: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
-        return func(self.value)
+        return factory(self.value)
 
     @override
     def ok(self) -> Maybe[T]:
@@ -212,7 +212,7 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         return cast(Result[T, F], self)
 
     @override
-    def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
+    def or_else[F](self, factory: Callable[[E], Result[T, F]]) -> Result[T, F]:
         return cast(Result[T, F], self)
 
     @override
@@ -228,7 +228,7 @@ class Ok[T, E = Any](_BaseResult[T, E]):
         return self.value
 
     @override
-    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
+    def unwrap_or_else(self, default_factory: Callable[[E], T]) -> T:
         return self.value
 
 
@@ -242,7 +242,7 @@ class Err[E, T = Any](_BaseResult[T, E]):
         return cast(Result[U, E], self)
 
     @override
-    def and_then[U](self, func: Callable[[T], Result[U, E]]) -> Result[U, E]:
+    def and_then[U](self, factory: Callable[[T], Result[U, E]]) -> Result[U, E]:
         return cast(Result[U, E], self)
 
     @override
@@ -267,20 +267,20 @@ class Err[E, T = Any](_BaseResult[T, E]):
         return self
 
     @override
-    def map[U](self, func: Callable[[T], U]) -> Result[U, E]:
+    def map[U](self, factory: Callable[[T], U]) -> Result[U, E]:
         return cast(Result[U, E], self)
 
     @override
-    def map_err[F](self, func: Callable[[E], F]) -> Result[T, F]:
-        return Err(func(self.value))
+    def map_err[F](self, factory: Callable[[E], F]) -> Result[T, F]:
+        return Err(factory(self.value))
 
     @override
-    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+    def map_or[U](self, factory: Callable[[T], U], default: U) -> U:
         return default
 
     @override
     def map_or_else[U](
-        self, func: Callable[[T], U], default_factory: Callable[[E], U]
+        self, factory: Callable[[T], U], default_factory: Callable[[E], U]
     ) -> U:
         return default_factory(self.value)
 
@@ -293,8 +293,8 @@ class Err[E, T = Any](_BaseResult[T, E]):
         return result
 
     @override
-    def or_else[F](self, func: Callable[[E], Result[T, F]]) -> Result[T, F]:
-        return func(self.value)
+    def or_else[F](self, factory: Callable[[E], Result[T, F]]) -> Result[T, F]:
+        return factory(self.value)
 
     @override
     def unwrap(self) -> T:
@@ -309,8 +309,8 @@ class Err[E, T = Any](_BaseResult[T, E]):
         return default
 
     @override
-    def unwrap_or_else(self, func: Callable[[E], T]) -> T:
-        return func(self.value)
+    def unwrap_or_else(self, default_factory: Callable[[E], T]) -> T:
+        return default_factory(self.value)
 
 
 # ==========================================
@@ -326,8 +326,8 @@ class _BaseMaybe[T](ABC):
         """
 
     @abstractmethod
-    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
-        """Calls `func` and returns its return value if self is an instance of `Some`, otherwise returns `Nothing`."""
+    def and_then[U](self, factory: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        """Calls `factory` and returns its return value if self is an instance of `Some`, otherwise returns `Nothing`."""
 
     @abstractmethod
     def expect(self, message: str) -> T:
@@ -342,26 +342,26 @@ class _BaseMaybe[T](ABC):
         """Calls `func` with `self.value` if `self` is an instance of `Some`."""
 
     @abstractmethod
-    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
-        """Calls `func` with `self.value` and returns a new `Some` instance with the return value of `func` if `self` is an instance of `Some`, otherwise returns `Nothing`."""
+    def map[U](self, factory: Callable[[T], U]) -> Maybe[U]:
+        """Calls `factory` with `self.value` and returns a new `Some` instance with the return value of `factory` if `self` is an instance of `Some`, otherwise returns `Nothing`."""
 
     @abstractmethod
-    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
-        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Some`, otherwise returns `default`."""
+    def map_or[U](self, factory: Callable[[T], U], default: U) -> U:
+        """Calls `factory` with `self.value` and returns the return value of `factory` if `self` is an instance of `Some`, otherwise returns `default`."""
 
     @abstractmethod
     def map_or_else[U](
-        self, func: Callable[[T], U], default_factory: Callable[[], U]
+        self, factory: Callable[[T], U], default_factory: Callable[[], U]
     ) -> U:
-        """Calls `func` with `self.value` and returns the return value of `func` if `self` is an instance of `Some`, otherwise returns the return value of `default_factory`."""
+        """Calls `factory` with `self.value` and returns the return value of `factory` if `self` is an instance of `Some`, otherwise returns the return value of `default_factory`."""
 
     @abstractmethod
     def ok_or[E](self, err: E) -> Result[T, E]:
         """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with `err`."""
 
     @abstractmethod
-    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
-        """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with the return value of `func`."""
+    def ok_or_else[E](self, factory: Callable[[], E]) -> Result[T, E]:
+        """Returns an instance of `Ok` with `self.value` if `self` is an instance of `Some`, otherwise returns an instance of `Err` with the return value of `factory`."""
 
     @abstractmethod
     def or_(self, maybe: Maybe[T]) -> Maybe[T]:
@@ -372,8 +372,8 @@ class _BaseMaybe[T](ABC):
         """
 
     @abstractmethod
-    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
-        """Calls `func` and returns its return value if `self` is `Nothing`, otherwise returns `self`."""
+    def or_else(self, factory: Callable[[], Maybe[T]]) -> Maybe[T]:
+        """Calls `factory` and returns its return value if `self` is `Nothing`, otherwise returns `self`."""
 
     @abstractmethod
     def unwrap(self) -> T:
@@ -384,8 +384,8 @@ class _BaseMaybe[T](ABC):
         """Returns `self.value` if `self` is an instance of `Some`, otherwise returns `default`."""
 
     @abstractmethod
-    def unwrap_or_else(self, func: Callable[[], T]) -> T:
-        """Returns `self.value` if `self` is an instance of `Some`, otherwise returns the return value of `func`."""
+    def unwrap_or_else(self, factory: Callable[[], T]) -> T:
+        """Returns `self.value` if `self` is an instance of `Some`, otherwise returns the return value of `factory`."""
 
 
 @final
@@ -398,8 +398,8 @@ class Some[T](_BaseMaybe[T]):
         return maybe
 
     @override
-    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
-        return func(self.value)
+    def and_then[U](self, factory: Callable[[T], Maybe[U]]) -> Maybe[U]:
+        return factory(self.value)
 
     @override
     def expect(self, message: str) -> T:
@@ -415,25 +415,25 @@ class Some[T](_BaseMaybe[T]):
         return self
 
     @override
-    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
-        return Some(func(self.value))
+    def map[U](self, factory: Callable[[T], U]) -> Maybe[U]:
+        return Some(factory(self.value))
 
     @override
-    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
-        return func(self.value)
+    def map_or[U](self, factory: Callable[[T], U], default: U) -> U:
+        return factory(self.value)
 
     @override
     def map_or_else[U](
-        self, func: Callable[[T], U], default_factory: Callable[[], U]
+        self, factory: Callable[[T], U], default_factory: Callable[[], U]
     ) -> U:
-        return func(self.value)
+        return factory(self.value)
 
     @override
     def ok_or[E](self, err: E) -> Result[T, E]:
         return Ok(self.value)
 
     @override
-    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
+    def ok_or_else[E](self, factory: Callable[[], E]) -> Result[T, E]:
         return Ok(self.value)
 
     @override
@@ -441,7 +441,7 @@ class Some[T](_BaseMaybe[T]):
         return self
 
     @override
-    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
+    def or_else(self, factory: Callable[[], Maybe[T]]) -> Maybe[T]:
         return self
 
     @override
@@ -453,7 +453,7 @@ class Some[T](_BaseMaybe[T]):
         return self.value
 
     @override
-    def unwrap_or_else(self, func: Callable[[], T]) -> T:
+    def unwrap_or_else(self, factory: Callable[[], T]) -> T:
         return self.value
 
 
@@ -467,7 +467,7 @@ class NothingType[T = Any](_BaseMaybe[T]):
         return Nothing
 
     @override
-    def and_then[U](self, func: Callable[[T], Maybe[U]]) -> Maybe[U]:
+    def and_then[U](self, factory: Callable[[T], Maybe[U]]) -> Maybe[U]:
         return Nothing
 
     @override
@@ -483,16 +483,16 @@ class NothingType[T = Any](_BaseMaybe[T]):
         return Nothing
 
     @override
-    def map[U](self, func: Callable[[T], U]) -> Maybe[U]:
+    def map[U](self, factory: Callable[[T], U]) -> Maybe[U]:
         return Nothing
 
     @override
-    def map_or[U](self, func: Callable[[T], U], default: U) -> U:
+    def map_or[U](self, factory: Callable[[T], U], default: U) -> U:
         return default
 
     @override
     def map_or_else[U](
-        self, func: Callable[[T], U], default_factory: Callable[[], U]
+        self, factory: Callable[[T], U], default_factory: Callable[[], U]
     ) -> U:
         return default_factory()
 
@@ -501,16 +501,16 @@ class NothingType[T = Any](_BaseMaybe[T]):
         return Err(err)
 
     @override
-    def ok_or_else[E](self, func: Callable[[], E]) -> Result[T, E]:
-        return Err(func())
+    def ok_or_else[E](self, factory: Callable[[], E]) -> Result[T, E]:
+        return Err(factory())
 
     @override
     def or_(self, maybe: Maybe[T]) -> Maybe[T]:
         return maybe
 
     @override
-    def or_else(self, func: Callable[[], Maybe[T]]) -> Maybe[T]:
-        return func()
+    def or_else(self, factory: Callable[[], Maybe[T]]) -> Maybe[T]:
+        return factory()
 
     @override
     def unwrap(self) -> T:
@@ -521,8 +521,8 @@ class NothingType[T = Any](_BaseMaybe[T]):
         return default
 
     @override
-    def unwrap_or_else(self, func: Callable[[], T]) -> T:
-        return func()
+    def unwrap_or_else(self, factory: Callable[[], T]) -> T:
+        return factory()
 
 
 Nothing = NothingType()

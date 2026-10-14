@@ -9,8 +9,7 @@ from collections.abc import (
 )
 from dataclasses import dataclass, field
 
-from remus import errs
-from remus._internal import Err, Maybe, Nothing, Ok, Result, Some
+from remus import Err, Maybe, Nothing, Ok, Result, Some, errs
 
 
 # ==========================================
@@ -66,9 +65,6 @@ class MutArray[T](Array[T]):
 
     def clear(self) -> None:
         self.data.clear()
-
-    def extend(self, iterable: Iterable[T]) -> None:
-        self.data.extend(iterable)
 
     def insert(self, index: int, value: T) -> None:
         self.data.insert(index, value)
@@ -164,6 +160,3 @@ class MutMap[K, T](Map[K, T]):
 
     def set_default(self, key: K, default: T) -> T:
         return self.data.setdefault(key, default)
-
-    def update(self, data: Mapping[K, T]) -> None:
-        self.data.update(data)
