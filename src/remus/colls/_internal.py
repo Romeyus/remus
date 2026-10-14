@@ -66,9 +66,6 @@ class MutArray[T](Array[T]):
     def clear(self) -> None:
         self.data.clear()
 
-    def extend(self, iterable: Iterable[T]) -> None:
-        self.data.extend(iterable)
-
     def insert(self, index: int, value: T) -> None:
         self.data.insert(index, value)
 
