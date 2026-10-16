@@ -96,6 +96,39 @@ class MethodNotAllowedErr:
 # ===            URL Values                 ===
 # ==========================================
 @dataclass(frozen=True, slots=True)
+class Cookies:
+    data: colls.Map[str, colls.Array[str]] = field(
+        default_factory=colls.Map[str, colls.Array[str]]
+    )
+
+    def get(self, key: str) -> Maybe[str]:
+        return (
+            self.data.get(key)
+            .filter(lambda v: len(v) == 1)
+            .unwrap_or_else(colls.Array[str])
+            .first()
+        )
+
+    def get_all(self, key: str) -> colls.Array[str]:
+        return self.data.get(key).unwrap_or_else(colls.Array[str])
+
+    def items(self) -> Iterable[tuple[str, str]]:
+        return ((k, v) for k, vs in self.data.items() for v in vs)
+
+    def keys(self) -> Iterable[str]:
+        return self.data.keys()
+
+    def values(self) -> Iterable[str]:
+        return (v for vs in self.data.values() for v in vs)
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.data
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.data)
+
+
+@dataclass(frozen=True, slots=True)
 class Headers:
     data: colls.Map[strs.Lowercase, colls.Array[str]] = field(
         default_factory=colls.Map[strs.Lowercase, colls.Array[str]]

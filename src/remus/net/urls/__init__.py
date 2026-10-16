@@ -1,4 +1,5 @@
 from remus.net.urls._internal import (
+    Cookies,
     Headers,
     MethodNotAllowedErr,
     NotFoundErr,
@@ -9,6 +10,7 @@ from remus.net.urls._internal import (
 )
 
 __all__ = (
+    "Cookies",
     "Headers",
     "MethodNotAllowedErr",
     "NotFoundErr",

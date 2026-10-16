@@ -5,6 +5,32 @@ from remus.net import urls
 
 
 # ==========================================
+# ===            Cookies                 ===
+# ==========================================
+class TestCookies:
+    @pytest.fixture
+    def cookies(self) -> urls.Cookies:
+        return urls.Cookies(
+            colls.Map(
+                {
+                    "theme": colls.Array(["dark"]),
+                    "session": colls.Array(["random-value"]),
+                    "custom-cookie": colls.Array(["value-1", "value-2"]),
+                }
+            )
+        )
+
+    # ===============get==============
+    def test_get_should_return_first_value(self, cookies: urls.Cookies) -> None:
+        assert cookies.get("theme") == Some("dark")
+
+    def test_get_should_return_nothing_for_multiple_values(
+        self, cookies: urls.Cookies
+    ) -> None:
+        assert cookies.get("custom-cookie") is Nothing
+
+
+# ==========================================
 # ===            Headers Tests                 ===
 # ==========================================
 class TestHeaders:
