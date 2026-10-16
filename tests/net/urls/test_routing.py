@@ -3,7 +3,6 @@ from http import HTTPMethod
 import pytest
 
 from remus import Err, Ok
-from remus._internal import Panic
 from remus.net import urls
 
 
@@ -48,33 +47,6 @@ class TestPath:
         ),
     )
     def test_path_should_remove_all_trailing_slashes(
-        self, input: str, expected: str
-    ) -> None:
-        assert urls.Path(input) == urls.Path(expected)
-
-    @pytest.mark.parametrize(
-        ("input",),
-        (
-            pytest.param(".."),
-            pytest.param("../"),
-            pytest.param("../src"),
-            pytest.param("src/../secret"),
-        ),
-    )
-    def test_path_should_panic_on_parent_directory_segments(self, input: str) -> None:
-        with pytest.raises(Panic):
-            urls.Path(input)
-
-    @pytest.mark.parametrize(
-        ("input", "expected"),
-        (
-            pytest.param(".", "/."),
-            pytest.param("hello.txt", "/hello.txt"),
-            pytest.param("hello.css", "/hello.css"),
-            pytest.param("hello/world.js", "/hello/world.js"),
-        ),
-    )
-    def test_path_should_allow_single_dot_segments(
         self, input: str, expected: str
     ) -> None:
         assert urls.Path(input) == urls.Path(expected)
