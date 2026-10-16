@@ -9,6 +9,14 @@ authors = [
 requires-python = ">=3.14"
 dependencies = []
 
+[project.optional-dependencies]
+all = [
+    "remus[net]",
+]
+net = [
+    "nanoroute>=2.0.5",
+]
+
 [build-system]
 requires = ["uv_build>=0.12.8,<0.13.0"]
 build-backend = "uv_build"
@@ -36,3 +44,6 @@ typeCheckingMode = "strict"
 addopts = ["--import-mode=importlib"]
 pythonpath = ["src"]
 strict = true
+
+[tool.uv.sources]
+remus = { workspace = true }

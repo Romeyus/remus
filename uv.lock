@@ -102,6 +102,19 @@ wheels = [
 ]
 
 [[package]]
+name = "nanoroute"
+version = "2.0.5"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/99/7bd335b4badbfad14a8b51c653306ad6a5b0ef879ec68ed643da56c0a38d/nanoroute-2.0.5.tar.gz", hash = "sha256:9a8eacc53fdef3d52e6ead856d4fe4dd04a7b7f0d3c0d08fdae50bdddb42abd3", size = 19860, upload-time = "2025-10-16T05:10:08.109Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/7c/7d243b75648075284f8a280ec2f5fc23468e52d4ca28baa1fb1c0cc03ee6/nanoroute-2.0.5-cp314-cp314-macosx_13_0_arm64.whl", hash = "sha256:8194f8466348f33ac2f73a817090a8aefa7670a4a23e323d82a703e8e1444d3c", size = 24801, upload-time = "2025-10-16T05:10:02.165Z" },
+    { url = "https://files.pythonhosted.org/packages/0d/29/ed85faffc8486e7d9f2ce051224960694cc4e2bc2fc1e6bf671c249a6ee4/nanoroute-2.0.5-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:b7e0b6629c90cae2f08ec044ad9f81a93fe7f60a856305ee9b59cf98564fd33e", size = 34172, upload-time = "2025-10-16T05:10:03.421Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/78/4b8e32fd40a383fe3257555cf4eac47703572b51039f4f682bd6e8859401/nanoroute-2.0.5-cp314-cp314-win_amd64.whl", hash = "sha256:0140e198a1de8256a2bbbda34208d52bc7a9be64d67ae931ce459e07e2767b74", size = 85219, upload-time = "2025-10-16T05:10:04.672Z" },
+    { url = "https://files.pythonhosted.org/packages/56/78/5fe2a6fd03cf73d7f994e2011ccf9b736d9c62e5f3d291dcee00aec783f3/nanoroute-2.0.5-cp314-cp314t-macosx_13_0_arm64.whl", hash = "sha256:76e5ac7eb1bed68e2fae8ae64ceda87a903de693a3d6a962ba922de6719c345b", size = 25258, upload-time = "2025-10-16T05:10:05.616Z" },
+    { url = "https://files.pythonhosted.org/packages/a0/21/c84a15f323f4464765691cb870f911b278d5c59304f299407f79244358fb/nanoroute-2.0.5-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:204339702995486078f2a770022aaee84a32f2ccebc1f669dadd835ad2ed0f53", size = 34968, upload-time = "2025-10-16T05:10:06.866Z" },
+]
+
+[[package]]
 name = "nodejs-wheel-binaries"
 version = "24.19.0"
 source = { registry = "https://pypi.org/simple" }
@@ -179,6 +192,14 @@ name = "remus"
 version = "0.6.0"
 source = { editable = "." }
 
+[package.optional-dependencies]
+all = [
+    { name = "nanoroute" },
+]
+net = [
+    { name = "nanoroute" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "basedpyright" },
@@ -188,6 +209,11 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [
+    { name = "nanoroute", marker = "extra == 'net'", specifier = ">=2.0.5" },
+    { name = "remus", extras = ["net"], marker = "extra == 'all'", editable = "." },
+]
+provides-extras = ["net", "all"]
 
 [package.metadata.requires-dev]
 dev = [
