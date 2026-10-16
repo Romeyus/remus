@@ -13,7 +13,7 @@ class TestLowercase:
             pytest.param("Hello world", "hello world"),
         ),
     )
-    def test_lowercase_converts_all_strs_to_lowercase(
+    def test_lowercase_should_convert_all_strs_to_lowercase(
         self, input: str, expected: str
     ) -> None:
         assert strs.Lowercase(input) == strs.Lowercase(expected)

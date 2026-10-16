@@ -1,4 +1,5 @@
 from remus.net.urls._internal import (
+    Headers,
     MethodNotAllowedErr,
     NotFoundErr,
     Path,
@@ -8,6 +9,7 @@ from remus.net.urls._internal import (
 )
 
 __all__ = (
+    "Headers",
     "MethodNotAllowedErr",
     "NotFoundErr",
     "Path",

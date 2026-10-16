@@ -1,8 +1,8 @@
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Iterator, Mapping
 from dataclasses import dataclass, field
 from http import HTTPMethod
 
-from remus import Err, Ok, Result, panic
+from remus import Err, Maybe, Ok, Result, colls, panic, strs
 
 try:
     import nanoroute
@@ -90,3 +90,34 @@ class MethodNotAllowedErr:
     path: Path
     method: HTTPMethod
     allowed_methods: Iterable[HTTPMethod]
+
+
+# ==========================================
+# ===            URL Values                 ===
+# ==========================================
+@dataclass(frozen=True, slots=True)
+class Headers:
+    data: colls.Map[strs.Lowercase, colls.Array[str]] = field(
+        default_factory=colls.Map[strs.Lowercase, colls.Array[str]]
+    )
+
+    def get(self, key: str) -> Maybe[str]:
+        return self.get_all(key).first()
+
+    def get_all(self, key: str) -> colls.Array[str]:
+        return self.data.get(strs.Lowercase(key)).unwrap_or_else(colls.Array[str])
+
+    def items(self) -> Iterable[tuple[str, str]]:
+        return ((k.value, v) for k, vs in self.data.items() for v in vs)
+
+    def keys(self) -> Iterable[str]:
+        return (k.value for k in self.data)
+
+    def values(self) -> Iterable[str]:
+        return (v for vs in self.data.values() for v in vs)
+
+    def __contains__(self, key: str) -> bool:
+        return strs.Lowercase(key) in self.data
+
+    def __iter__(self) -> Iterator[str]:
+        return (k.value for k in self.data)
