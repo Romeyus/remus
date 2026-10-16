@@ -105,3 +105,34 @@ class TestHeaders:
 
     def test__contains__should_normalise_key(self, headers: urls.Headers) -> None:
         assert "Content-Type" in headers
+
+
+# ==========================================
+# ===            Queries Tests                 ===
+# ==========================================
+class TestQueries:
+    @pytest.fixture
+    def queries(self) -> urls.Queries:
+        return urls.Queries(
+            colls.Map(
+                {
+                    "search": colls.Array(["properties"]),
+                    "order_by": colls.Array(["desc"]),
+                    "types": colls.Array(["flat", "bungalow", "studio"]),
+                }
+            )
+        )
+
+    # ===============get==============
+    @pytest.mark.parametrize(
+        ("key", "value"),
+        (
+            pytest.param("search", "properties"),
+            pytest.param("order_by", "desc"),
+            pytest.param("types", "studio"),
+        ),
+    )
+    def test_get_should_return_last_value(
+        self, queries: urls.Queries, key: str, value: str
+    ) -> None:
+        assert queries.get(key) == Some(value)

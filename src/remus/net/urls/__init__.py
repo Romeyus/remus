@@ -5,6 +5,7 @@ from remus.net.urls._internal import (
     NotFoundErr,
     Path,
     PathParams,
+    Queries,
     RouteMatch,
     Router,
 )
@@ -16,6 +17,7 @@ __all__ = (
     "NotFoundErr",
     "Path",
     "PathParams",
+    "Queries",
     "RouteMatch",
     "Router",
 )
