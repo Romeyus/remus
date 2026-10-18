@@ -1,9 +1,10 @@
+import logging
 import sys
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from threading import current_thread
-from traceback import extract_tb, print_tb
+from traceback import format_exception
 from types import TracebackType
 from typing import Any, Never, cast, final, override
 
@@ -12,6 +13,8 @@ from typing import Any, Never, cast, final, override
 # ==========================================
 PANIC_FONT_RED_BOLD = "\x1b[1;31m"
 PANIC_FONT_RESET = "\x1b[0m"
+
+logger = logging.getLogger("remus")
 
 
 # ==========================================
@@ -40,24 +43,13 @@ def panic(message: str) -> Never:
 def panic_excepthook(  # pragma: no cover
     exc_type: type[BaseException], exc: BaseException, traceback: TracebackType | None
 ) -> None:
-    if exc_type is not Panic:
+    if not isinstance(exc, Panic):
         return sys.__excepthook__(exc_type, exc, traceback)
 
-    frames = extract_tb(traceback)[:-1]
-    if not frames:
-        return print(
-            f"\n{PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked at '{exc}'{PANIC_FONT_RESET}",
-            file=sys.stderr,
-        )
-
-    print("\nTraceback (most recent call last):")
-    print_tb(traceback, file=sys.stderr, limit=len(frames))
-
-    frame = frames[-1]
-    print(
-        f"\n{PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked at '{exc}',"
-        f" {frame.filename}:{frame.lineno}{PANIC_FONT_RESET}",
-        file=sys.stderr,
+    logger.critical("\n" + "".join(format_exception(exc)))
+    logger.critical(
+        f"\n{PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked: '{exc}'"
+        f"{PANIC_FONT_RESET}\n"
     )
 
 
