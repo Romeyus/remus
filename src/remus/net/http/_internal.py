@@ -4,8 +4,9 @@ from abc import ABC
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
 from dataclasses import dataclass, field
 from http import HTTPMethod, HTTPStatus
-from typing import Protocol, Self
+from typing import Any, Protocol, Self
 
+from remus import Maybe, colls
 from remus.net import urls
 
 # ==========================================
@@ -39,6 +40,7 @@ class BaseRequest(ABC):
     method: Method
     _headers_factory: HeadersFactory
     _queries_factory: QueriesFactory
+    metadata: colls.MutMap[str, Any]
 
     @property
     def path(self) -> str:
@@ -72,6 +74,10 @@ class Response:
     status: Status
     body: Body | None = None
     headers: urls.MutHeaders = field(default_factory=urls.MutHeaders)
+
+    @property
+    def content_type(self) -> Maybe[str]:
+        return self.headers.get("content-type")
 
     def append_header(self, key: str, value: str) -> Self:
         self.headers.append(key, value)
@@ -131,3 +137,7 @@ def sse(status: Status, aiter: AsyncIterable[bytes | str]) -> Response:
         .set_content_type("text/event-stream")
         .set_header("cache-control", "no-cache")
     )
+
+
+def error(status: Status, message: str | None = None) -> Response:
+    return text(status, message or status.phrase)

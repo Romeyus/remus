@@ -10,8 +10,8 @@ from typing import Any, Never, cast, final, override
 # ==========================================
 # ===            Constants                 ===
 # ==========================================
-_PANIC_FONT_RED_BOLD = "\x1b[1;31m"
-_PANIC_FONT_RESET = "\x1b[0m"
+PANIC_FONT_RED_BOLD = "\x1b[1;31m"
+PANIC_FONT_RESET = "\x1b[0m"
 
 
 # ==========================================
@@ -37,7 +37,7 @@ def panic(message: str) -> Never:
     raise Panic(message)
 
 
-def _panic_excepthook(  # pragma: no cover
+def panic_excepthook(  # pragma: no cover
     exc_type: type[BaseException], exc: BaseException, traceback: TracebackType | None
 ) -> None:
     if exc_type is not Panic:
@@ -46,22 +46,22 @@ def _panic_excepthook(  # pragma: no cover
     frames = extract_tb(traceback)[:-1]
     if not frames:
         return print(
-            f"{_PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked at '{exc}'{_PANIC_FONT_RESET}",
+            f"\n{PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked at '{exc}'{PANIC_FONT_RESET}",
             file=sys.stderr,
         )
 
-    print("Traceback (most recent call last):")
+    print("\nTraceback (most recent call last):")
     print_tb(traceback, file=sys.stderr, limit=len(frames))
 
     frame = frames[-1]
     print(
-        f"\n{_PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked at '{exc}',"
-        f" {frame.filename}:{frame.lineno}{_PANIC_FONT_RESET}",
+        f"\n{PANIC_FONT_RED_BOLD}thread '{current_thread().name}' panicked at '{exc}',"
+        f" {frame.filename}:{frame.lineno}{PANIC_FONT_RESET}",
         file=sys.stderr,
     )
 
 
-sys.excepthook = _panic_excepthook
+sys.excepthook = panic_excepthook
 
 
 # ==========================================

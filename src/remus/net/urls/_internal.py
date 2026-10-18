@@ -1,4 +1,4 @@
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, field
 from http import HTTPMethod
 
@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover
 # ==========================================
 # ===            Types                 ===
 # ==========================================
-type PathParams = Mapping[str, str]
+type PathParams = colls.Map[str, str]
 type RouteErr = NotFoundErr | MethodNotAllowedErr
 
 
@@ -56,7 +56,7 @@ class Router[T]:
     def match(self, path: Path, method: HTTPMethod) -> Result[RouteMatch[T], RouteErr]:
         try:
             target, params = self._nanorouter.lookup(method, path.value)
-            return Ok(RouteMatch(target, params))
+            return Ok(RouteMatch(target, colls.Map(params)))
 
         except LookupError:
             allowed_methods: list[HTTPMethod] = []
