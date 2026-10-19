@@ -2,7 +2,7 @@ from http import HTTPMethod
 
 import pytest
 
-from remus import Err, Ok
+from remus import Err, Ok, colls
 from remus.net import urls
 
 
@@ -74,18 +74,24 @@ class TestRouter:
     ) -> None:
         router.map(urls.Path(path), method, "Hello world!")
         assert router.match(urls.Path(path), method) == Ok(
-            urls.RouteMatch("Hello world!", {})
+            urls.RouteMatch("Hello world!", colls.Map())
         )
 
     @pytest.mark.parametrize(
         ("registered_path", "request_path", "params"),
         (
-            pytest.param("/users/:user_id", "/users/123", {"user_id": "123"}),
             pytest.param(
-                "/hello/:message", "/hello/greetings", {"message": "greetings"}
+                "/users/:user_id", "/users/123", colls.Map({"user_id": "123"})
             ),
             pytest.param(
-                "/hello/world/:greeting", "/hello/world/wassup", {"greeting": "wassup"}
+                "/hello/:message",
+                "/hello/greetings",
+                colls.Map({"message": "greetings"}),
+            ),
+            pytest.param(
+                "/hello/world/:greeting",
+                "/hello/world/wassup",
+                colls.Map({"greeting": "wassup"}),
             ),
         ),
     )
@@ -106,7 +112,7 @@ class TestRouter:
     ) -> None:
         router.map(urls.Path("/"), HTTPMethod.GET, "Hello world!")
         assert router.match(urls.Path("/"), HTTPMethod.HEAD) == Ok(
-            urls.RouteMatch("Hello world!", {})
+            urls.RouteMatch("Hello world!", colls.Map())
         )
 
     def test_map_should_add_path_for_multiple_methods(
@@ -120,7 +126,7 @@ class TestRouter:
         )
         for m in methods:
             assert router.match(urls.Path("/"), m) == Ok(
-                urls.RouteMatch("Hello world!", {})
+                urls.RouteMatch("Hello world!", colls.Map())
             )
 
     # ===============match==============
