@@ -83,10 +83,6 @@ class Response:
         self.headers.append(key, value)
         return self
 
-    def pop_header(self, key: str) -> Self:
-        self.headers.pop(key)
-        return self
-
     def set_content_type(self, value: str) -> Self:
         return self.set_header("content-type", value)
 
@@ -116,7 +112,7 @@ class Stream:
 
 
 def text(status: Status, content: bytes | str) -> Response:
-    return Response(status, content).set_content_type("text/plain")
+    return Response(status, content).set_content_type("text/plain; charset=utf-8")
 
 
 def html(status: Status, content: bytes | str) -> Response:
