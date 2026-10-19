@@ -1,9 +1,6 @@
-from dataclasses import dataclass
+from typing import Self
 
 
-@dataclass(frozen=True, slots=True)
-class Lowercase:
-    value: str
-
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "value", self.value.lower())
+class Lowercase(str):
+    def __new__(cls, value: str) -> Self:
+        return super().__new__(cls, value.lower())

@@ -1,9 +1,10 @@
-from collections.abc import AsyncGenerator, AsyncIterator, Callable
+from collections.abc import AsyncGenerator, AsyncIterator, Callable, Mapping
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Protocol
+from typing import Any, Protocol, override
 
 from remus import Err, Ok, Result
+from remus.net import http, urls
 from remus.net.http._internal import BaseRequest
 
 
@@ -82,9 +83,29 @@ class Close:
 # ==========================================
 # ===            Requests                 ===
 # ==========================================
-@dataclass(frozen=True, slots=True)
 class Request(BaseRequest):
-    _context: RequestContext
+    @override
+    def __init__(
+        self,
+        *,
+        path: urls.Path,
+        params: urls.PathParams,
+        method: http.Method,
+        headers_factory: Callable[[], urls.Headers],
+        queries_factory: Callable[[], urls.Queries],
+        metadata: Mapping[str, Any],
+        context: RequestContext,
+    ) -> None:
+        super().__init__(
+            path=path,
+            params=params,
+            method=method,
+            headers_factory=headers_factory,
+            queries_factory=queries_factory,
+            metadata=metadata,
+        )
+
+        self._context = context
 
     async def upgrade(self) -> Websocket:
         return await self._context.upgrade()
@@ -93,9 +114,9 @@ class Request(BaseRequest):
 # ==========================================
 # ===            Websockets                 ===
 # ==========================================
-@dataclass(frozen=True, slots=True)
 class Websocket:
-    _context: WebsocketContext
+    def __init__(self, context: WebsocketContext) -> None:
+        self._context = context
 
     def as_bytes(self) -> AsyncIterator[Result[bytes, Close]]:
         async def wrapper() -> AsyncGenerator[Result[bytes, Close]]:

@@ -1,4 +1,5 @@
 from remus.net.http._internal import (
+    Body,
     File,
     Handler,
     Method,
@@ -16,6 +17,7 @@ from remus.net.http._internal import (
 )
 
 __all__ = (
+    "Body",
     "File",
     "Handler",
     "Method",

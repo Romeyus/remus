@@ -1,6 +1,6 @@
 import pytest
 
-from remus import Nothing, Some, colls, strs
+from remus import Nothing, Some, colls
 from remus.net import urls
 
 
@@ -11,13 +11,11 @@ class TestCookies:
     @pytest.fixture
     def cookies(self) -> urls.Cookies:
         return urls.Cookies(
-            colls.Map(
-                {
-                    "theme": colls.Array(["dark"]),
-                    "session": colls.Array(["random-value"]),
-                    "custom-cookie": colls.Array(["value-1", "value-2"]),
-                }
-            )
+            {
+                "theme": ["dark"],
+                "session": ["random-value"],
+                "custom-cookie": ["value-1", "value-2"],
+            }
         )
 
     # ===============get==============
@@ -37,15 +35,11 @@ class TestHeaders:
     @pytest.fixture
     def headers(self) -> urls.Headers:
         return urls.Headers(
-            colls.Map(
-                {
-                    strs.Lowercase("content-type"): colls.Array(["application/json"]),
-                    strs.Lowercase("content-length"): colls.Array(["42"]),
-                    strs.Lowercase("x-custom-header"): colls.Array(
-                        ["value-1", "value-2"]
-                    ),
-                }
-            )
+            {
+                "content-type": ["application/json"],
+                "content-length": ["42"],
+                "x-custom-header": ["value-1", "value-2"],
+            }
         )
 
     # ===============get==============
@@ -114,13 +108,11 @@ class TestQueries:
     @pytest.fixture
     def queries(self) -> urls.Queries:
         return urls.Queries(
-            colls.Map(
-                {
-                    "search": colls.Array(["properties"]),
-                    "order_by": colls.Array(["desc"]),
-                    "types": colls.Array(["flat", "bungalow", "studio"]),
-                }
-            )
+            {
+                "search": ["properties"],
+                "order_by": ["desc"],
+                "types": ["flat", "bungalow", "studio"],
+            }
         )
 
     # ===============get==============
