@@ -37,11 +37,23 @@ class App:
         self._app: Application = self.__app__
         self._router: urls.Router[Mount] = urls.Router()
 
+    def delete(self, path: str) -> http.Middleware:
+        return self.route(path, http.Method.DELETE)
+
     def get(self, path: str) -> http.Middleware:
         return self.route(path, http.Method.GET)
 
     def mount(self, path: str, app: Application) -> None:
         self._router.map(urls.Path(path), http.Method, (urls.Path(path), app))
+
+    def patch(self, path: str) -> http.Middleware:
+        return self.route(path, http.Method.PATCH)
+
+    def post(self, path: str) -> http.Middleware:
+        return self.route(path, http.Method.POST)
+
+    def put(self, path: str) -> http.Middleware:
+        return self.route(path, http.Method.PUT)
 
     def route(
         self, path: str, methods: http.Method | Iterable[http.Method]
