@@ -3,6 +3,24 @@ revision = 3
 requires-python = ">=3.14"
 
 [[package]]
+name = "aiofiles"
+version = "25.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/c3/534eac40372d8ee36ef40df62ec129bee4fdb5ad9706e58a29be53b2c970/aiofiles-25.1.0.tar.gz", hash = "sha256:a8d728f0a29de45dc521f18f07297428d56992a742f0cd2701ba86e44d23d5b2", size = 46354, upload-time = "2025-10-09T20:51:04.358Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/bc/8a/340a1555ae33d7354dbca4faa54948d76d89a27ceef032c8c3bc661d003e/aiofiles-25.1.0-py3-none-any.whl", hash = "sha256:abe311e527c862958650f9438e859c1fa7568a141b22abcd015e120e86a85695", size = 14668, upload-time = "2025-10-09T20:51:03.174Z" },
+]
+
+[[package]]
+name = "asgiref"
+version = "3.12.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e6/26/3b59f2bdae5f640389becb1f673cded775287f5fc4f816309d9ca9a3f93d/asgiref-3.12.1.tar.gz", hash = "sha256:59dcb51c272ad209d59bed5708a64a333083e86017d7fcdd67498eeab7784340", size = 42378, upload-time = "2026-07-14T09:56:18.087Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/1b/54f4ad77cd8a584fa70746c47df988e002cf1ee1eba43364d46f87803647/asgiref-3.12.1-py3-none-any.whl", hash = "sha256:fe386d1c2bff7259ea95929266d12a8cf9a8b5a1c2598402967d8792e7a7c094", size = 25478, upload-time = "2026-07-14T09:56:16.926Z" },
+]
+
+[[package]]
 name = "basedpyright"
 version = "1.40.2"
 source = { registry = "https://pypi.org/simple" }
@@ -194,9 +212,13 @@ source = { editable = "." }
 
 [package.optional-dependencies]
 all = [
+    { name = "aiofiles" },
+    { name = "asgiref" },
     { name = "nanoroute" },
 ]
 net = [
+    { name = "aiofiles" },
+    { name = "asgiref" },
     { name = "nanoroute" },
 ]
 
@@ -210,10 +232,12 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "aiofiles", marker = "extra == 'net'", specifier = ">=25.1.0" },
+    { name = "asgiref", marker = "extra == 'net'", specifier = ">=3.12.1" },
     { name = "nanoroute", marker = "extra == 'net'", specifier = ">=2.0.5" },
     { name = "remus", extras = ["net"], marker = "extra == 'all'", editable = "." },
 ]
-provides-extras = ["net", "all"]
+provides-extras = ["all", "net"]
 
 [package.metadata.requires-dev]
 dev = [
