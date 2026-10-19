@@ -7,11 +7,14 @@ from http import HTTPMethod, HTTPStatus
 from typing import Any, Protocol, Self
 
 from remus import Maybe, colls
+from remus.html import tmpl
 from remus.net import urls
 
 # ==========================================
 # ===            Constants                 ===
 # ==========================================
+DEFAULT_TEMPLATES = tmpl.Templates("templates")
+
 Method = HTTPMethod
 Status = HTTPStatus
 
@@ -119,7 +122,19 @@ def html(status: Status, content: bytes | str) -> Response:
     return Response(status, content).set_content_type("text/html; charset=utf-8")
 
 
-def file(status: Status, path: str) -> Response:
+def template(
+    request: Request,
+    status: Status,
+    name: str,
+    context: dict[str, Any] | None = None,
+    templates: tmpl.Templates = DEFAULT_TEMPLATES,
+) -> Response:
+    context = context or {}
+    context.setdefault("request", request)
+    return html(status, templates.render(name, **context))
+
+
+def file(status: Status, path: str | os.PathLike[str]) -> Response:
     return Response(status, File(pathlib.Path(path)))
 
 

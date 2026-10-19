@@ -12,6 +12,7 @@ from remus.net.http._internal import (
     html,
     sse,
     stream,
+    template,
     text,
 )
 
@@ -29,5 +30,6 @@ __all__ = (
     "html",
     "sse",
     "stream",
+    "template",
     "text",
 )

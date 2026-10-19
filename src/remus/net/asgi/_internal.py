@@ -1,5 +1,7 @@
 import asyncio
 import mimetypes
+import os
+import pathlib
 import urllib.parse
 import uuid
 from collections.abc import AsyncGenerator, AsyncIterator, Callable, Iterable
@@ -21,12 +23,7 @@ SEND_FILE_CHUNK_SIZE = 1024
 # ==========================================
 # ===            Types                 ===
 # ==========================================
-type Application = asgiref.ASGI3Application
-type Middleware = Callable[[Application], Application]
-type Mount = tuple[urls.Path, Application]
-type Receive = asgiref.ASGIReceiveCallable
-type Scope = asgiref.Scope
-type Send = asgiref.ASGISendCallable
+type Middleware = Callable[[asgiref.ASGI3Application], asgiref.ASGI3Application]
 
 
 # ==========================================
@@ -34,7 +31,7 @@ type Send = asgiref.ASGISendCallable
 # ==========================================
 class App:
     def __init__(self) -> None:
-        self._app: Application = self.__app__
+        self._app: asgiref.ASGI3Application = self.__app__
         self._router: urls.Router[Mount] = urls.Router()
 
     def delete(self, path: str) -> http.Middleware:
@@ -43,8 +40,9 @@ class App:
     def get(self, path: str) -> http.Middleware:
         return self.route(path, http.Method.GET)
 
-    def mount(self, path: str, app: Application) -> None:
-        self._router.map(urls.Path(path), http.Method, (urls.Path(path), app))
+    def mount(self, path: str, app: asgiref.ASGI3Application) -> None:
+        mount = Mount(urls.Path(path), app)
+        self._router.map(urls.Path(f"/{path}/*"), http.Method, mount)
 
     def patch(self, path: str) -> http.Middleware:
         return self.route(path, http.Method.PATCH)
@@ -59,8 +57,8 @@ class App:
         self, path: str, methods: http.Method | Iterable[http.Method]
     ) -> http.Middleware:
         def decorator(handler: http.Handler) -> http.Handler:
-            target = urls.Path(path), HTTPHandlerApp(handler)
-            self._router.map(urls.Path(path), methods, target)
+            mount = Mount(urls.Path(""), HTTPHandlerApp(handler))
+            self._router.map(urls.Path(path), methods, mount)
             return handler
 
         return decorator
@@ -70,16 +68,26 @@ class App:
 
     def websocket(self, path: str) -> ws.Middleware:
         def decorator(handler: ws.Handler) -> ws.Handler:
-            target = urls.Path(path), WSHandlerApp(handler)
-            self._router.map(urls.Path(path), http.Method.GET, target)
+            mount = Mount(urls.Path(""), WSHandlerApp(handler))
+            self._router.map(urls.Path(path), http.Method.GET, mount)
             return handler
 
         return decorator
 
-    async def __app__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __app__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
         await RouterApp(self._router)(scope, receive, send)
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
         try:
             await self._app(scope, receive, send)
 
@@ -94,17 +102,33 @@ class App:
 class HTTPHandlerApp:
     _handler: http.Handler
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
         request = new_http_request(scope, receive, send)
         response = await self._handler(request)
         await ResponseApp(response)(scope, receive, send)
 
 
 @dataclass(frozen=True, slots=True)
+class Mount:
+    path: urls.Path
+    app: asgiref.ASGI3Application
+
+
+@dataclass(frozen=True, slots=True)
 class ResponseApp:
     _response: http.Response
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
         if scope["type"] != "http":
             return
 
@@ -163,13 +187,19 @@ class ResponseApp:
             case None:
                 await self._send_none(send)
 
-    async def _send_bytes(self, send: Send, body: bytes, *, more_body: bool) -> None:
+    async def _send_bytes(
+        self, send: asgiref.ASGISendCallable, body: bytes, *, more_body: bool
+    ) -> None:
         await send({"type": "http.response.body", "body": body, "more_body": more_body})
 
-    async def _send_str(self, send: Send, body: str, *, more_body: bool) -> None:
+    async def _send_str(
+        self, send: asgiref.ASGISendCallable, body: str, *, more_body: bool
+    ) -> None:
         await self._send_bytes(send, body.encode("utf-8"), more_body=more_body)
 
-    async def _send_file(self, scope: Scope, send: Send, file: http.File) -> None:
+    async def _send_file(
+        self, scope: asgiref.Scope, send: asgiref.ASGISendCallable, file: http.File
+    ) -> None:
         if "http.response.pathsend" in (scope.get("extensions") or {}):
             return await send(
                 {"type": "http.response.pathsend", "path": str(file.path)}  # type: ignore
@@ -182,7 +212,9 @@ class ResponseApp:
 
         await self._send_stream(send, http.Stream(stream_iter()))
 
-    async def _send_stream(self, send: Send, stream: http.Stream) -> None:
+    async def _send_stream(
+        self, send: asgiref.ASGISendCallable, stream: http.Stream
+    ) -> None:
         async for chunk in stream:
             match chunk:
                 case bytes():
@@ -193,7 +225,7 @@ class ResponseApp:
 
         await self._send_none(send)
 
-    async def _send_none(self, send: Send) -> None:
+    async def _send_none(self, send: asgiref.ASGISendCallable) -> None:
         await self._send_bytes(send, b"", more_body=False)
 
 
@@ -201,7 +233,12 @@ class ResponseApp:
 class RouterApp:
     _router: urls.Router[Mount]
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
         if scope["type"] == "lifespan":
             return
 
@@ -212,16 +249,16 @@ class RouterApp:
 
         match route_match:
             case urls.RouteMatch():
-                mount_path, app = route_match.target
+                mount = route_match.target
                 mounted_scope = scope.copy()
                 mounted_scope.get("state", {})["path_params"] = route_match.params
                 mounted_scope["path"] = urls.Path(
-                    path.value.removeprefix(mount_path.value)
+                    path.value.removeprefix(mount.path.value)
                 ).value
                 mounted_scope["root_path"] = urls.Path(
-                    f"{scope['root_path']}/{mount_path.value}"
+                    f"{scope['root_path']}/{mount.path.value}"
                 ).value
-                await app(mounted_scope, receive, send)
+                await mount.app(mounted_scope, receive, send)
 
             case urls.NotFoundErr():
                 response = http.error(http.Status.NOT_FOUND)
@@ -238,11 +275,40 @@ class RouterApp:
                 await ResponseApp(response)(scope, receive, send)
 
 
+class StaticFilesApp:
+    def __init__(self, static_dir: str | os.PathLike[str]) -> None:
+        self._static_dir = pathlib.Path(static_dir).resolve()
+
+    async def __call__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
+        if scope["type"] != "http":
+            return
+
+        path = pathlib.Path(f"{self._static_dir}/{scope['path']}").resolve()
+
+        if path.is_file():
+            response = http.file(http.Status.OK, path)
+
+        else:
+            response = http.error(http.Status.NOT_FOUND)
+
+        await ResponseApp(response)(scope, receive, send)
+
+
 @dataclass(frozen=True, slots=True)
 class WSHandlerApp:
     _handler: ws.Handler
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
         request = new_ws_request(scope, receive, send)
 
         async for message in self._handler(request):
@@ -256,7 +322,12 @@ class WSHandlerApp:
 class WSMessageApp:
     _message: ws.Message
 
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    async def __call__(
+        self,
+        scope: asgiref.Scope,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
         if scope["type"] != "websocket":
             return
 
@@ -288,7 +359,7 @@ class WSMessageApp:
 # ==========================================
 @dataclass(slots=True)
 class BodyFactory:
-    _receive: Receive
+    _receive: asgiref.ASGIReceiveCallable
 
     _body: bytes | None = field(default=None, init=False)
     _stream_consumed: bool = field(default=False, init=False)
@@ -366,7 +437,7 @@ class QueriesFactory:
 # ==========================================
 @dataclass(frozen=True, slots=True)
 class AppHTTPHandler:
-    _app: Application
+    _app: asgiref.ASGI3Application
 
     async def __call__(self, request: http.Request) -> http.Response:
         metadata: RequestMetadata = request.metadata.get(REQUEST_METADATA_KEY).expect(
@@ -428,7 +499,7 @@ class AppHTTPHandler:
 
 @dataclass(frozen=True, slots=True)
 class AppWSHandler:
-    _app: Application
+    _app: asgiref.ASGI3Application
 
     def __call__(self, request: ws.Request) -> AsyncGenerator[ws.Message]:
         return self._message_iter(request)
@@ -486,8 +557,12 @@ class AppWSHandler:
 class HTTPMiddleware:
     _middleware: http.Middleware
 
-    def __call__(self, app: Application) -> Application:
-        async def wrapper(scope: Scope, receive: Receive, send: Send) -> None:
+    def __call__(self, app: asgiref.ASGI3Application) -> asgiref.ASGI3Application:
+        async def wrapper(
+            scope: asgiref.Scope,
+            receive: asgiref.ASGIReceiveCallable,
+            send: asgiref.ASGISendCallable,
+        ) -> None:
             if scope["type"] != "http":
                 return await app(scope, receive, send)
 
@@ -501,8 +576,12 @@ class HTTPMiddleware:
 class WSMiddleware:
     _middleware: ws.Middleware
 
-    def __call__(self, app: Application) -> Application:
-        async def wrapper(scope: Scope, receive: Receive, send: Send) -> None:
+    def __call__(self, app: asgiref.ASGI3Application) -> asgiref.ASGI3Application:
+        async def wrapper(
+            scope: asgiref.Scope,
+            receive: asgiref.ASGIReceiveCallable,
+            send: asgiref.ASGISendCallable,
+        ) -> None:
             if scope["type"] != "websocket":
                 return await app(scope, receive, send)
 
@@ -517,15 +596,15 @@ class WSMiddleware:
 # ==========================================
 @dataclass(frozen=True, slots=True)
 class RequestMetadata:
-    scope: Scope
-    receive: Receive
-    send: Send
+    scope: asgiref.Scope
+    receive: asgiref.ASGIReceiveCallable
+    send: asgiref.ASGISendCallable
 
 
 @dataclass(slots=True)
 class WSRequestContext:
-    _receive: Receive
-    _send: Send
+    _receive: asgiref.ASGIReceiveCallable
+    _send: asgiref.ASGISendCallable
 
     _is_upgraded: bool = field(default=False, init=False)
 
@@ -545,7 +624,11 @@ class WSRequestContext:
         return ws.Websocket(WebsocketContext(self._receive))
 
 
-def new_http_request(scope: Scope, receive: Receive, send: Send) -> http.Request:
+def new_http_request(
+    scope: asgiref.Scope,
+    receive: asgiref.ASGIReceiveCallable,
+    send: asgiref.ASGISendCallable,
+) -> http.Request:
     if scope["type"] != "http":
         panic(f"expected ASGI scope type 'http', got {scope['type']!r}")
 
@@ -560,7 +643,11 @@ def new_http_request(scope: Scope, receive: Receive, send: Send) -> http.Request
     )
 
 
-def new_ws_request(scope: Scope, receive: Receive, send: Send) -> ws.Request:
+def new_ws_request(
+    scope: asgiref.Scope,
+    receive: asgiref.ASGIReceiveCallable,
+    send: asgiref.ASGISendCallable,
+) -> ws.Request:
     if scope["type"] != "websocket":
         panic(f"expected ASGI scope type 'websocket', got {scope['type']!r}")
 
@@ -580,7 +667,7 @@ def new_ws_request(scope: Scope, receive: Receive, send: Send) -> ws.Request:
 # ==========================================
 @dataclass(frozen=True, slots=True)
 class WebsocketContext:
-    _receive: Receive
+    _receive: asgiref.ASGIReceiveCallable
 
     def __aiter__(self) -> AsyncIterator[ws.Message]:
         return self._message_iter()

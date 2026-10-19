@@ -11,7 +11,11 @@ dependencies = []
 
 [project.optional-dependencies]
 all = [
+    "remus[html]",
     "remus[net]",
+]
+html = [
+    "jinja2>=3.1.6",
 ]
 net = [
     "aiofiles>=25.1.0",
