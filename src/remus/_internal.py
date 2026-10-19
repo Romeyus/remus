@@ -28,12 +28,12 @@ type Maybe[T] = Some[T] | NothingType[T]
 # ===            Panic                 ===
 # ==========================================
 @final
-@dataclass(frozen=True, slots=True)
 class Panic(BaseException):
-    message: str
+    def __init__(self, message: str) -> None:
+        self._message = message
 
     def __str__(self) -> str:
-        return self.message
+        return self._message
 
 
 def panic(message: str) -> Never:

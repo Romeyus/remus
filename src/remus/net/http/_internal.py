@@ -1,10 +1,10 @@
 import os
 import pathlib
 from abc import ABC
-from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable, Mapping
 from dataclasses import dataclass, field
 from http import HTTPMethod, HTTPStatus
-from typing import Any, Protocol, Self
+from typing import Any, Protocol, Self, override
 
 from remus import Maybe, colls
 from remus.html import tmpl
@@ -23,9 +23,7 @@ Status = HTTPStatus
 # ==========================================
 type Body = bytes | str | File | Stream
 type Handler = Callable[[Request], Awaitable[Response]]
-type HeadersFactory = Callable[[], urls.Headers]
 type Middleware = Callable[[Handler], Handler]
-type QueriesFactory = Callable[[], urls.Queries]
 
 
 class BodyFactory(Protocol):
@@ -36,18 +34,35 @@ class BodyFactory(Protocol):
 # ==========================================
 # ===            Requests                 ===
 # ==========================================
-@dataclass(frozen=True, slots=True)
 class BaseRequest(ABC):
-    _path: urls.Path
-    params: urls.PathParams
-    method: Method
-    _headers_factory: HeadersFactory
-    _queries_factory: QueriesFactory
-    metadata: colls.MutMap[str, Any]
+    def __init__(
+        self,
+        *,
+        path: urls.Path,
+        params: urls.PathParams,
+        method: Method,
+        headers_factory: Callable[[], urls.Headers],
+        queries_factory: Callable[[], urls.Queries],
+        metadata: Mapping[str, Any],
+    ) -> None:
+        self._path = path
+        self._params = params
+        self._method = method
+        self._headers_factory = headers_factory
+        self._queries_factory = queries_factory
+        self._metadata = colls.Map(metadata)
 
     @property
     def path(self) -> str:
-        return self._path.value
+        return self._path
+
+    @property
+    def params(self) -> urls.PathParams:
+        return self._params
+
+    @property
+    def method(self) -> Method:
+        return self._method
 
     @property
     def headers(self) -> urls.Headers:
@@ -57,10 +72,34 @@ class BaseRequest(ABC):
     def queries(self) -> urls.Queries:
         return self._queries_factory()
 
+    @property
+    def metadata(self) -> colls.Map[str, Any]:
+        return self._metadata
 
-@dataclass(frozen=True, slots=True)
+
 class Request(BaseRequest):
-    _body_factory: BodyFactory
+    @override
+    def __init__(
+        self,
+        *,
+        path: urls.Path,
+        params: urls.PathParams,
+        method: Method,
+        headers_factory: Callable[[], urls.Headers],
+        queries_factory: Callable[[], urls.Queries],
+        metadata: Mapping[str, Any],
+        body_factory: BodyFactory,
+    ) -> None:
+        super().__init__(
+            path=path,
+            params=params,
+            method=method,
+            headers_factory=headers_factory,
+            queries_factory=queries_factory,
+            metadata=metadata,
+        )
+
+        self._body_factory = body_factory
 
     async def body(self) -> bytes:
         return await self._body_factory()
@@ -98,17 +137,21 @@ class Response:
         return self
 
 
-@dataclass(frozen=True, slots=True)
 class File:
-    path: os.PathLike[str]
+    def __init__(self, path: str | os.PathLike[str]) -> None:
+        self._path = pathlib.Path(path).resolve()
 
-    def __post_init__(self) -> None:
-        object.__setattr__(self, "path", pathlib.Path(self.path).resolve())
+    @property
+    def path(self) -> pathlib.Path:
+        return self._path
+
+    def __str__(self) -> str:
+        return str(self._path)
 
 
-@dataclass(frozen=True, slots=True)
 class Stream:
-    _aiter: AsyncIterable[bytes | str]
+    def __init__(self, async_iterable: AsyncIterable[bytes | str]) -> None:
+        self._aiter = async_iterable
 
     def __aiter__(self) -> AsyncIterator[bytes | str]:
         return aiter(self._aiter)
@@ -138,13 +181,13 @@ def file(status: Status, path: str | os.PathLike[str]) -> Response:
     return Response(status, File(pathlib.Path(path)))
 
 
-def stream(status: Status, aiter: AsyncIterable[bytes | str]) -> Response:
-    return Response(status, Stream(aiter))
+def stream(status: Status, async_iterable: AsyncIterable[bytes | str]) -> Response:
+    return Response(status, Stream(async_iterable))
 
 
-def sse(status: Status, aiter: AsyncIterable[bytes | str]) -> Response:
+def sse(status: Status, async_iterable: AsyncIterable[bytes | str]) -> Response:
     return (
-        stream(status, aiter)
+        stream(status, async_iterable)
         .set_content_type("text/event-stream")
         .set_header("cache-control", "no-cache")
     )

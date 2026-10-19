@@ -5,12 +5,12 @@ import pathlib
 import urllib.parse
 import uuid
 from collections.abc import AsyncGenerator, AsyncIterator, Callable, Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import aiofiles.os
 import asgiref.typing as asgiref
 
-from remus import Maybe, Nothing, Some, colls, panic, strs
+from remus import Maybe, Nothing, Some, colls, panic
 from remus._internal import Panic, panic_excepthook
 from remus.net import http, urls, ws
 
@@ -98,9 +98,9 @@ class App:
             panic_excepthook(e.__class__, e, e.__traceback__)
 
 
-@dataclass(frozen=True, slots=True)
 class HTTPHandlerApp:
-    _handler: http.Handler
+    def __init__(self, handler: http.Handler) -> None:
+        self._handler = handler
 
     async def __call__(
         self,
@@ -119,9 +119,9 @@ class Mount:
     app: asgiref.ASGI3Application
 
 
-@dataclass(frozen=True, slots=True)
 class ResponseApp:
-    _response: http.Response
+    def __init__(self, response: http.Response) -> None:
+        self._response = response
 
     async def __call__(
         self,
@@ -229,9 +229,9 @@ class ResponseApp:
         await self._send_bytes(send, b"", more_body=False)
 
 
-@dataclass(frozen=True, slots=True)
 class RouterApp:
-    _router: urls.Router[Mount]
+    def __init__(self, router: urls.Router[Mount]) -> None:
+        self._router = router
 
     async def __call__(
         self,
@@ -252,12 +252,10 @@ class RouterApp:
                 mount = route_match.target
                 mounted_scope = scope.copy()
                 mounted_scope.get("state", {})["path_params"] = route_match.params
-                mounted_scope["path"] = urls.Path(
-                    path.value.removeprefix(mount.path.value)
-                ).value
+                mounted_scope["path"] = urls.Path(path.removeprefix(mount.path))
                 mounted_scope["root_path"] = urls.Path(
-                    f"{scope['root_path']}/{mount.path.value}"
-                ).value
+                    f"{scope['root_path']}/{mount.path}"
+                )
                 await mount.app(mounted_scope, receive, send)
 
             case urls.NotFoundErr():
@@ -299,9 +297,9 @@ class StaticFilesApp:
         await ResponseApp(response)(scope, receive, send)
 
 
-@dataclass(frozen=True, slots=True)
 class WSHandlerApp:
-    _handler: ws.Handler
+    def __init__(self, handler: ws.Handler) -> None:
+        self._handler = handler
 
     async def __call__(
         self,
@@ -318,9 +316,9 @@ class WSHandlerApp:
                 break
 
 
-@dataclass(frozen=True, slots=True)
 class WSMessageApp:
-    _message: ws.Message
+    def __init__(self, message: ws.Message) -> None:
+        self._message = message
 
     async def __call__(
         self,
@@ -357,12 +355,12 @@ class WSMessageApp:
 # ==========================================
 # ===            Factories                 ===
 # ==========================================
-@dataclass(slots=True)
 class BodyFactory:
-    _receive: asgiref.ASGIReceiveCallable
+    def __init__(self, receive: asgiref.ASGIReceiveCallable) -> None:
+        self._receive = receive
 
-    _body: bytes | None = field(default=None, init=False)
-    _stream_consumed: bool = field(default=False, init=False)
+        self._body: bytes | None = None
+        self._stream_consumed: bool = False
 
     def __aiter__(self) -> AsyncIterator[bytes]:
         return self._body_iter()
@@ -396,11 +394,11 @@ class BodyFactory:
         self._body = b"".join(chunks)
 
 
-@dataclass(slots=True)
 class HeadersFactory:
-    _asgi_headers: Iterable[tuple[bytes, bytes]]
+    def __init__(self, asgi_headers: Iterable[tuple[bytes, bytes]]) -> None:
+        self._asgi_headers = asgi_headers
 
-    _headers: urls.Headers | None = field(default=None, init=False)
+        self._headers: urls.Headers | None = None
 
     def __call__(self) -> urls.Headers:
         if self._headers is None:
@@ -409,35 +407,30 @@ class HeadersFactory:
                 key = k.decode("latin-1")
                 value = v.decode("latin-1")
                 headers_dict.setdefault(key, []).append(value)
-
-            headers_map = colls.Map(
-                {strs.Lowercase(k): colls.Array(v) for k, v in headers_dict.items()}
-            )
-            self._headers = urls.Headers(headers_map)
+            self._headers = urls.Headers(headers_dict)
         return self._headers
 
 
-@dataclass(slots=True)
 class QueriesFactory:
-    _query_string: bytes
+    def __init__(self, query_string: bytes) -> None:
+        self._query_string = query_string
 
-    _queries: urls.Queries | None = field(default=None, init=False)
+        self._queries: urls.Queries | None = None
 
     def __call__(self) -> urls.Queries:
         if self._queries is None:
             query_str = self._query_string.decode("latin-1")
             query_dict = urllib.parse.parse_qs(query_str, keep_blank_values=True)
-            query_map = colls.Map({k: colls.Array(v) for k, v in query_dict.items()})
-            self._queries = urls.Queries(query_map)
+            self._queries = urls.Queries(query_dict)
         return self._queries
 
 
 # ==========================================
 # ===            Handlers                 ===
 # ==========================================
-@dataclass(frozen=True, slots=True)
 class AppHTTPHandler:
-    _app: asgiref.ASGI3Application
+    def __init__(self, app: asgiref.ASGI3Application) -> None:
+        self._app = app
 
     async def __call__(self, request: http.Request) -> http.Response:
         metadata: RequestMetadata = request.metadata.get(REQUEST_METADATA_KEY).expect(
@@ -453,7 +446,9 @@ class AppHTTPHandler:
 
         start = asyncio.Event()
 
-        async def send_wrapper(event: asgiref.ASGISendEvent) -> None:
+        async def send_wrapper(
+            event: asgiref.ASGISendEvent,
+        ) -> None:
             nonlocal status, headers
 
             if event["type"] == "http.response.start":
@@ -490,16 +485,12 @@ class AppHTTPHandler:
             key = k.decode("latin-1")
             value = v.decode("latin-1")
             headers_dict.setdefault(key, []).append(value)
-
-        headers_map = colls.MutMap(
-            {strs.Lowercase(k): colls.MutArray(v) for k, v in headers_dict.items()}
-        )
-        return urls.MutHeaders(headers_map)
+        return urls.MutHeaders(headers_dict)
 
 
-@dataclass(frozen=True, slots=True)
 class AppWSHandler:
-    _app: asgiref.ASGI3Application
+    def __init__(self, app: asgiref.ASGI3Application) -> None:
+        self._app = app
 
     def __call__(self, request: ws.Request) -> AsyncGenerator[ws.Message]:
         return self._message_iter(request)
@@ -517,7 +508,9 @@ class AppWSHandler:
 
         start = asyncio.Event()
 
-        async def send_wrapper(event: asgiref.ASGISendEvent) -> None:
+        async def send_wrapper(
+            event: asgiref.ASGISendEvent,
+        ) -> None:
 
             if event["type"] == "websocket.accept":
                 await send(event)
@@ -553,9 +546,9 @@ class AppWSHandler:
 # ==========================================
 # ===            Middleware                 ===
 # ==========================================
-@dataclass(frozen=True, slots=True)
 class HTTPMiddleware:
-    _middleware: http.Middleware
+    def __init__(self, middleware: http.Middleware) -> None:
+        self._middleware = middleware
 
     def __call__(self, app: asgiref.ASGI3Application) -> asgiref.ASGI3Application:
         async def wrapper(
@@ -572,9 +565,9 @@ class HTTPMiddleware:
         return wrapper
 
 
-@dataclass(frozen=True, slots=True)
 class WSMiddleware:
-    _middleware: ws.Middleware
+    def __init__(self, middleware: ws.Middleware) -> None:
+        self._middleware = middleware
 
     def __call__(self, app: asgiref.ASGI3Application) -> asgiref.ASGI3Application:
         async def wrapper(
@@ -601,12 +594,16 @@ class RequestMetadata:
     send: asgiref.ASGISendCallable
 
 
-@dataclass(slots=True)
 class WSRequestContext:
-    _receive: asgiref.ASGIReceiveCallable
-    _send: asgiref.ASGISendCallable
+    def __init__(
+        self,
+        receive: asgiref.ASGIReceiveCallable,
+        send: asgiref.ASGISendCallable,
+    ) -> None:
+        self._receive = receive
+        self._send = send
 
-    _is_upgraded: bool = field(default=False, init=False)
+        self._is_upgraded: bool = False
 
     async def upgrade(self) -> ws.Websocket:
         if self._is_upgraded:
@@ -633,13 +630,13 @@ def new_http_request(
         panic(f"expected ASGI scope type 'http', got {scope['type']!r}")
 
     return http.Request(
-        urls.Path(scope["path"]),
-        scope.get("state", {}).get("path_params", colls.Map()),
-        http.Method(scope["method"]),
-        HeadersFactory(scope["headers"]),
-        QueriesFactory(scope["query_string"]),
-        colls.MutMap({REQUEST_METADATA_KEY: RequestMetadata(scope, receive, send)}),
-        BodyFactory(receive),
+        path=urls.Path(scope["path"]),
+        params=scope.get("state", {}).get("path_params", colls.Map()),
+        method=http.Method(scope["method"]),
+        headers_factory=HeadersFactory(scope["headers"]),
+        queries_factory=QueriesFactory(scope["query_string"]),
+        metadata={REQUEST_METADATA_KEY: RequestMetadata(scope, receive, send)},
+        body_factory=BodyFactory(receive),
     )
 
 
@@ -652,22 +649,22 @@ def new_ws_request(
         panic(f"expected ASGI scope type 'websocket', got {scope['type']!r}")
 
     return ws.Request(
-        urls.Path(scope["path"]),
-        scope.get("state", {}).get("path_params", colls.Map()),
-        http.Method.GET,
-        HeadersFactory(scope["headers"]),
-        QueriesFactory(scope["query_string"]),
-        colls.MutMap({REQUEST_METADATA_KEY: RequestMetadata(scope, receive, send)}),
-        WSRequestContext(receive, send),
+        path=urls.Path(scope["path"]),
+        params=scope.get("state", {}).get("path_params", colls.Map()),
+        method=http.Method.GET,
+        headers_factory=HeadersFactory(scope["headers"]),
+        queries_factory=QueriesFactory(scope["query_string"]),
+        metadata={REQUEST_METADATA_KEY: RequestMetadata(scope, receive, send)},
+        context=WSRequestContext(receive, send),
     )
 
 
 # ==========================================
 # ===            Websockets                 ===
 # ==========================================
-@dataclass(frozen=True, slots=True)
 class WebsocketContext:
-    _receive: asgiref.ASGIReceiveCallable
+    def __init__(self, receive: asgiref.ASGIReceiveCallable) -> None:
+        self._receive = receive
 
     def __aiter__(self) -> AsyncIterator[ws.Message]:
         return self._message_iter()
