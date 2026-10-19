@@ -8,9 +8,9 @@ from dataclasses import dataclass, field
 import aiofiles.os
 import asgiref.typing as asgiref
 
-from remus import Err, Maybe, Nothing, Ok, Some, colls, panic, strs
+from remus import Err, Maybe, Nothing, Ok, Result, Some, colls, panic, strs
 from remus._internal import Panic, panic_excepthook
-from remus.net import http, urls
+from remus.net import http, urls, ws
 
 # ==========================================
 # ===            Constants                 ===
@@ -68,48 +68,16 @@ class App:
     def use(self, middleware: Middleware) -> None:
         self._app = middleware(self._app)
 
+    def websocket(self, path: str) -> ws.Middleware:
+        def decorator(handler: ws.Handler) -> ws.Handler:
+            target = urls.Path(path), WSHandlerApp(handler)
+            self._router.map(urls.Path(path), http.Method.GET, target)
+            return handler
+
+        return decorator
+
     async def __app__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "http":
-            return
-
-        path = urls.Path(scope["path"])
-        method = http.Method(scope["method"])
-
-        match_res = self._router.match(path, method)
-
-        match match_res:
-            case Ok():
-                route_match = match_res.value
-                mount_path, app = route_match.target
-                mounted_scope = scope.copy()
-                mounted_scope.get("state", {})["path_params"] = route_match.params
-                mounted_scope["path"] = urls.Path(
-                    path.value.removeprefix(mount_path.value)
-                ).value
-                mounted_scope["root_path"] = urls.Path(
-                    f"{scope['root_path']}/{mount_path.value}"
-                ).value
-                await app(mounted_scope, receive, send)
-
-            case Err():
-                route_err = match_res.value
-
-                match route_err:
-                    case urls.NotFoundErr():
-                        response = http.error(http.Status.NOT_FOUND)
-
-                    case urls.MethodNotAllowedErr():
-                        if route_err.method == http.Method.OPTIONS:
-                            response = http.Response(http.Status.OK)
-
-                        else:
-                            response = http.Response(http.Status.METHOD_NOT_ALLOWED)
-
-                        response.set_header(
-                            "allow", ", ".join(route_err.allowed_methods)
-                        )
-
-                await ResponseApp(response)(scope, receive, send)
+        await RouterApp(self._router)(scope, receive, send)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         try:
@@ -120,6 +88,24 @@ class App:
             await ResponseApp(response)(scope, receive, send)
 
             panic_excepthook(e.__class__, e, e.__traceback__)
+
+
+@dataclass(frozen=True, slots=True)
+class ClosureApp:
+    _closure: ws.Closure
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "websocket":
+            return
+
+        code = self._closure.code
+        reason = self._closure.reason
+
+        try:
+            await send({"type": "websocket.close", "code": code, "reason": reason})
+
+        except OSError:
+            pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -163,6 +149,9 @@ class ResponseApp:
                 content_type = "application/octet-stream"
 
             headers.set("content-type", content_type)
+
+        if status != http.Status.NO_CONTENT and body is None:
+            headers.set("content-length", "0")
 
         await send(
             {
@@ -224,6 +213,57 @@ class ResponseApp:
 
     async def _send_none(self, send: Send) -> None:
         await self._send_bytes(send, b"", more_body=False)
+
+
+@dataclass(frozen=True, slots=True)
+class RouterApp:
+    _router: urls.Router[Mount]
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "lifespan":
+            return
+
+        path = urls.Path(scope["path"])
+        method = http.Method(scope.get("method") or http.Method.GET)
+
+        route_match = self._router.match(path, method).value
+
+        match route_match:
+            case urls.RouteMatch():
+                mount_path, app = route_match.target
+                mounted_scope = scope.copy()
+                mounted_scope.get("state", {})["path_params"] = route_match.params
+                mounted_scope["path"] = urls.Path(
+                    path.value.removeprefix(mount_path.value)
+                ).value
+                mounted_scope["root_path"] = urls.Path(
+                    f"{scope['root_path']}/{mount_path.value}"
+                ).value
+                await app(mounted_scope, receive, send)
+
+            case urls.NotFoundErr():
+                response = http.error(http.Status.NOT_FOUND)
+                await ResponseApp(response)(scope, receive, send)
+
+            case urls.MethodNotAllowedErr():
+                if route_match.method == http.Method.OPTIONS:
+                    response = http.Response(http.Status.NO_CONTENT)
+
+                else:
+                    response = http.Response(http.Status.METHOD_NOT_ALLOWED)
+
+                response.set_header("allow", ", ".join(route_match.allowed_methods))
+                await ResponseApp(response)(scope, receive, send)
+
+
+@dataclass(frozen=True, slots=True)
+class WSHandlerApp:
+    _handler: ws.Handler
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        request = new_ws_request(scope, receive, send)
+        closure = await self._handler(request)
+        await ClosureApp(closure)(scope, receive, send)
 
 
 # ==========================================
@@ -318,6 +358,7 @@ class AppHTTPHandler:
 
         scope = metadata.scope
         receive = metadata.receive
+        send = metadata.send
 
         status: Maybe[http.Status] = Nothing
         headers: Maybe[urls.MutHeaders] = Nothing
@@ -327,6 +368,8 @@ class AppHTTPHandler:
 
         async def send_wrapper(event: asgiref.ASGISendEvent) -> None:
             nonlocal status, headers
+
+            await send(event)
 
             if event["type"] == "http.response.start":
                 status = Some(http.Status(event["status"]))
@@ -369,6 +412,35 @@ class AppHTTPHandler:
         return urls.MutHeaders(headers_map)
 
 
+@dataclass(frozen=True, slots=True)
+class AppWSHandler:
+    _app: Application
+
+    async def __call__(self, request: ws.Request) -> ws.Closure:
+        metadata: RequestMetadata = request.metadata.get(REQUEST_METADATA_KEY).expect(
+            "expected RequestMetadata to be present"
+        )
+
+        scope = metadata.scope
+        receive = metadata.receive
+        send = metadata.send
+
+        code: Maybe[ws.Code] = Nothing
+        reason: Maybe[str] = Nothing
+
+        async def send_wrapper(event: asgiref.ASGISendEvent) -> None:
+            nonlocal code, reason
+
+            await send(event)
+
+            if event["type"] == "websocket.close":
+                code = Some(ws.Code(event["code"]))
+                reason = Some(event.get("reason") or "")
+
+        await self._app(scope, receive, send_wrapper)
+        return ws.Closure(code.unwrap(), reason.unwrap())
+
+
 # ==========================================
 # ===            Middleware                 ===
 # ==========================================
@@ -379,10 +451,25 @@ class HTTPMiddleware:
     def __call__(self, app: Application) -> Application:
         async def wrapper(scope: Scope, receive: Receive, send: Send) -> None:
             if scope["type"] != "http":
-                return
+                return await app(scope, receive, send)
 
             handler = self._middleware(AppHTTPHandler(app))
             await HTTPHandlerApp(handler)(scope, receive, send)
+
+        return wrapper
+
+
+@dataclass(frozen=True, slots=True)
+class WSMiddleware:
+    _middleware: ws.Middleware
+
+    def __call__(self, app: Application) -> Application:
+        async def wrapper(scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] != "websocket":
+                return await app(scope, receive, send)
+
+            handler = self._middleware(AppWSHandler(app))
+            await WSHandlerApp(handler)(scope, receive, send)
 
         return wrapper
 
@@ -394,6 +481,30 @@ class HTTPMiddleware:
 class RequestMetadata:
     scope: Scope
     receive: Receive
+    send: Send
+
+
+@dataclass(slots=True)
+class WSRequestContext:
+    _receive: Receive
+    _send: Send
+
+    _is_upgraded: bool = field(default=False, init=False)
+
+    async def upgrade(self) -> ws.Websocket:
+        if self._is_upgraded:
+            panic("request has already been upgraded to websocket")
+
+        event = await self._receive()
+        if event["type"] != "websocket.connect":
+            panic(f"expected ASGI event 'websocket.connect', got {event['type']!r}")
+
+        await self._send(
+            {"type": "websocket.accept", "headers": [], "subprotocol": None}
+        )
+        self._is_upgraded = True
+
+        return ws.Websocket(WebsocketContext(self._receive, self._send))
 
 
 def new_http_request(scope: Scope, receive: Receive, send: Send) -> http.Request:
@@ -406,6 +517,68 @@ def new_http_request(scope: Scope, receive: Receive, send: Send) -> http.Request
         http.Method(scope["method"]),
         HeadersFactory(scope["headers"]),
         QueriesFactory(scope["query_string"]),
-        colls.MutMap({REQUEST_METADATA_KEY: RequestMetadata(scope, receive)}),
+        colls.MutMap({REQUEST_METADATA_KEY: RequestMetadata(scope, receive, send)}),
         BodyFactory(receive),
     )
+
+
+def new_ws_request(scope: Scope, receive: Receive, send: Send) -> ws.Request:
+    if scope["type"] != "websocket":
+        panic(f"expected ASGI scope type 'websocket', got {scope['type']!r}")
+
+    return ws.Request(
+        urls.Path(scope["path"]),
+        scope.get("state", {}).get("path_params", colls.Map()),
+        http.Method.GET,
+        HeadersFactory(scope["headers"]),
+        QueriesFactory(scope["query_string"]),
+        colls.MutMap({REQUEST_METADATA_KEY: RequestMetadata(scope, receive, send)}),
+        WSRequestContext(receive, send),
+    )
+
+
+# ==========================================
+# ===            Websockets                 ===
+# ==========================================
+@dataclass(frozen=True, slots=True)
+class WebsocketContext:
+    _receive: Receive
+    _send: Send
+
+    async def receive_bytes(self) -> Result[bytes, ws.Closure]:
+        event = await self._receive()
+
+        if event["type"] == "websocket.disconnect":
+            return Err(ws.close())
+
+        if event["type"] != "websocket.receive":
+            return Err(ws.close(ws.Code.INTERNAL_ERROR))
+
+        data = event.get("bytes")
+
+        if data is None:
+            return Err(ws.close(ws.Code.UNSUPPORTED_DATA))
+
+        return Ok(data)
+
+    async def receive_str(self) -> Result[str, ws.Closure]:
+        event = await self._receive()
+
+        if event["type"] == "websocket.disconnect":
+            return Err(ws.close(ws.Code(event["code"]), event.get("reason")))
+
+        if event["type"] != "websocket.receive":
+            return Err(ws.close(ws.Code.INTERNAL_ERROR))
+
+        data = event.get("text")
+
+        if data is None:
+            return Err(ws.close(ws.Code.UNSUPPORTED_DATA))
+
+        return Ok(data)
+
+    async def send_bytes(self, data: bytes) -> None:
+        await self._send({"type": "websocket.send", "bytes": data, "text": None})
+
+    async def send_str(self, data: str) -> None:
+        await self._send({"type": "websocket.send", "text": data, "bytes": None})
