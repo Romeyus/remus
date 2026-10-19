@@ -1,9 +1,9 @@
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncGenerator, AsyncIterator, Callable
 from dataclasses import dataclass
 from enum import IntEnum
 from typing import Protocol
 
-from remus import Result
+from remus import Err, Ok, Result
 from remus.net.http._internal import BaseRequest
 
 
@@ -53,7 +53,8 @@ class Code(IntEnum):
 # ==========================================
 # ===            Types                 ===
 # ==========================================
-type Handler = Callable[[Request], Awaitable[Closure]]
+type Handler = Callable[[Request], AsyncGenerator[Message]]
+type Message = bytes | str | Close
 type Middleware = Callable[[Handler], Handler]
 
 
@@ -62,23 +63,20 @@ class RequestContext(Protocol):
 
 
 class WebsocketContext(Protocol):
-    async def receive_bytes(self) -> Result[bytes, Closure]: ...
-    async def receive_str(self) -> Result[str, Closure]: ...
-    async def send_bytes(self, data: bytes) -> None: ...
-    async def send_str(self, data: str) -> None: ...
+    def __aiter__(self) -> AsyncIterator[Message]: ...
 
 
 # ==========================================
 # ===            Closures                 ===
 # ==========================================
 @dataclass(frozen=True, slots=True)
-class Closure:
-    code: Code
-    reason: str
+class Close:
+    code: Code = Code.NORMAL_CLOSURE
+    reason: str = ""
 
-
-def close(code: Code = Code.NORMAL_CLOSURE, reason: str | None = None) -> Closure:
-    return Closure(code, reason or code.phrase)
+    def __post_init__(self) -> None:
+        if not self.reason:
+            object.__setattr__(self, "reason", self.code.phrase)
 
 
 # ==========================================
@@ -99,14 +97,27 @@ class Request(BaseRequest):
 class Websocket:
     _context: WebsocketContext
 
-    async def receive_bytes(self) -> Result[bytes, Closure]:
-        return await self._context.receive_bytes()
+    def as_bytes(self) -> AsyncIterator[Result[bytes, Close]]:
+        async def wrapper() -> AsyncGenerator[Result[bytes, Close]]:
+            async for message in self:
+                if isinstance(message, bytes):
+                    yield Ok(message)
 
-    async def receive_str(self) -> Result[str, Closure]:
-        return await self._context.receive_str()
+                else:
+                    yield Err(Close(Code.UNSUPPORTED_DATA))
 
-    async def send_bytes(self, data: bytes) -> None:
-        await self._context.send_bytes(data)
+        return wrapper()
 
-    async def send_str(self, data: str) -> None:
-        await self._context.send_str(data)
+    def as_str(self) -> AsyncIterator[Result[str, Close]]:
+        async def wrapper() -> AsyncGenerator[Result[str, Close]]:
+            async for message in self:
+                if isinstance(message, str):
+                    yield Ok(message)
+
+                else:
+                    yield Err(Close(Code.UNSUPPORTED_DATA))
+
+        return wrapper()
+
+    def __aiter__(self) -> AsyncIterator[Message]:
+        return aiter(self._context)

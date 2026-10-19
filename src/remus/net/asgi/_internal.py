@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 import aiofiles.os
 import asgiref.typing as asgiref
 
-from remus import Err, Maybe, Nothing, Ok, Result, Some, colls, panic, strs
+from remus import Maybe, Nothing, Some, colls, panic, strs
 from remus._internal import Panic, panic_excepthook
 from remus.net import http, urls, ws
 
@@ -88,24 +88,6 @@ class App:
             await ResponseApp(response)(scope, receive, send)
 
             panic_excepthook(e.__class__, e, e.__traceback__)
-
-
-@dataclass(frozen=True, slots=True)
-class ClosureApp:
-    _closure: ws.Closure
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "websocket":
-            return
-
-        code = self._closure.code
-        reason = self._closure.reason
-
-        try:
-            await send({"type": "websocket.close", "code": code, "reason": reason})
-
-        except OSError:
-            pass
 
 
 @dataclass(frozen=True, slots=True)
@@ -262,8 +244,43 @@ class WSHandlerApp:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         request = new_ws_request(scope, receive, send)
-        closure = await self._handler(request)
-        await ClosureApp(closure)(scope, receive, send)
+
+        async for message in self._handler(request):
+            await WSMessageApp(message)(scope, receive, send)
+
+            if isinstance(message, ws.Close):
+                break
+
+
+@dataclass(frozen=True, slots=True)
+class WSMessageApp:
+    _message: ws.Message
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "websocket":
+            return
+
+        message = self._message
+
+        match message:
+            case bytes():
+                await send({"type": "websocket.send", "bytes": message, "text": None})
+
+            case str():
+                await send({"type": "websocket.send", "text": message, "bytes": None})
+
+            case ws.Close():
+                try:
+                    await send(
+                        {
+                            "type": "websocket.close",
+                            "code": message.code,
+                            "reason": message.reason,
+                        }
+                    )
+
+                except OSError:
+                    pass
 
 
 # ==========================================
@@ -277,35 +294,35 @@ class BodyFactory:
     _stream_consumed: bool = field(default=False, init=False)
 
     def __aiter__(self) -> AsyncIterator[bytes]:
-        async def body_iter() -> AsyncGenerator[bytes]:
-            if self._body is not None:
-                yield self._body
-                return
-
-            if self._stream_consumed:
-                panic("stream consumed")
-
-            chunks: list[bytes] = []
-            while True:
-                event = await self._receive()
-
-                if event["type"] != "http.request":
-                    break
-
-                chunk = event["body"]
-                chunks.append(chunk)
-                yield chunk
-
-                if not event["more_body"]:
-                    self._stream_consumed = True
-                    break
-
-            self._body = b"".join(chunks)
-
-        return body_iter()
+        return self._body_iter()
 
     async def __call__(self) -> bytes:
         return b"".join([chunk async for chunk in self])
+
+    async def _body_iter(self) -> AsyncGenerator[bytes]:
+        if self._body is not None:
+            yield self._body
+            return
+
+        if self._stream_consumed:
+            panic("stream consumed")
+
+        chunks: list[bytes] = []
+        while True:
+            event = await self._receive()
+
+            if event["type"] != "http.request":
+                break
+
+            chunk = event["body"]
+            chunks.append(chunk)
+            yield chunk
+
+            if not event["more_body"]:
+                self._stream_consumed = True
+                break
+
+        self._body = b"".join(chunks)
 
 
 @dataclass(slots=True)
@@ -358,7 +375,6 @@ class AppHTTPHandler:
 
         scope = metadata.scope
         receive = metadata.receive
-        send = metadata.send
 
         status: Maybe[http.Status] = Nothing
         headers: Maybe[urls.MutHeaders] = Nothing
@@ -368,8 +384,6 @@ class AppHTTPHandler:
 
         async def send_wrapper(event: asgiref.ASGISendEvent) -> None:
             nonlocal status, headers
-
-            await send(event)
 
             if event["type"] == "http.response.start":
                 status = Some(http.Status(event["status"]))
@@ -416,7 +430,10 @@ class AppHTTPHandler:
 class AppWSHandler:
     _app: Application
 
-    async def __call__(self, request: ws.Request) -> ws.Closure:
+    def __call__(self, request: ws.Request) -> AsyncGenerator[ws.Message]:
+        return self._message_iter(request)
+
+    async def _message_iter(self, request: ws.Request) -> AsyncGenerator[ws.Message]:
         metadata: RequestMetadata = request.metadata.get(REQUEST_METADATA_KEY).expect(
             "expected RequestMetadata to be present"
         )
@@ -425,20 +442,41 @@ class AppWSHandler:
         receive = metadata.receive
         send = metadata.send
 
-        code: Maybe[ws.Code] = Nothing
-        reason: Maybe[str] = Nothing
+        message_queue: asyncio.Queue[ws.Message] = asyncio.Queue()
+
+        start = asyncio.Event()
 
         async def send_wrapper(event: asgiref.ASGISendEvent) -> None:
-            nonlocal code, reason
 
-            await send(event)
+            if event["type"] == "websocket.accept":
+                await send(event)
+                start.set()
+
+            if event["type"] == "websocket.send":
+                if data := event.get("bytes"):
+                    await message_queue.put(data)
+
+                if data := event.get("text"):
+                    await message_queue.put(data)
 
             if event["type"] == "websocket.close":
-                code = Some(ws.Code(event["code"]))
-                reason = Some(event.get("reason") or "")
+                await send(event)
+                code = ws.Code(event["code"])
+                reason = event.get("reason") or ""
+                await message_queue.put(ws.Close(code, reason))
 
-        await self._app(scope, receive, send_wrapper)
-        return ws.Closure(code.unwrap(), reason.unwrap())
+        async def app_task() -> None:
+            await self._app(scope, receive, send_wrapper)
+
+        asyncio.create_task(app_task())
+        await start.wait()
+
+        while True:
+            message = await message_queue.get()
+            yield message
+
+            if isinstance(message, ws.Close):
+                break
 
 
 # ==========================================
@@ -504,7 +542,7 @@ class WSRequestContext:
         )
         self._is_upgraded = True
 
-        return ws.Websocket(WebsocketContext(self._receive, self._send))
+        return ws.Websocket(WebsocketContext(self._receive))
 
 
 def new_http_request(scope: Scope, receive: Receive, send: Send) -> http.Request:
@@ -543,42 +581,26 @@ def new_ws_request(scope: Scope, receive: Receive, send: Send) -> ws.Request:
 @dataclass(frozen=True, slots=True)
 class WebsocketContext:
     _receive: Receive
-    _send: Send
 
-    async def receive_bytes(self) -> Result[bytes, ws.Closure]:
-        event = await self._receive()
+    def __aiter__(self) -> AsyncIterator[ws.Message]:
+        return self._message_iter()
 
-        if event["type"] == "websocket.disconnect":
-            return Err(ws.close())
+    async def _message_iter(self) -> AsyncGenerator[ws.Message]:
+        while True:
+            event = await self._receive()
 
-        if event["type"] != "websocket.receive":
-            return Err(ws.close(ws.Code.INTERNAL_ERROR))
+            if event["type"] == "websocket.disconnect":
+                code = ws.Code(event["code"])
+                reason = event.get("reason") or ""
+                yield ws.Close(code, reason)
+                break
 
-        data = event.get("bytes")
+            if event["type"] != "websocket.receive":
+                break
 
-        if data is None:
-            return Err(ws.close(ws.Code.UNSUPPORTED_DATA))
+            data = event.get("bytes") or event.get("text")
 
-        return Ok(data)
+            if data is None:
+                break
 
-    async def receive_str(self) -> Result[str, ws.Closure]:
-        event = await self._receive()
-
-        if event["type"] == "websocket.disconnect":
-            return Err(ws.close(ws.Code(event["code"]), event.get("reason")))
-
-        if event["type"] != "websocket.receive":
-            return Err(ws.close(ws.Code.INTERNAL_ERROR))
-
-        data = event.get("text")
-
-        if data is None:
-            return Err(ws.close(ws.Code.UNSUPPORTED_DATA))
-
-        return Ok(data)
-
-    async def send_bytes(self, data: bytes) -> None:
-        await self._send({"type": "websocket.send", "bytes": data, "text": None})
-
-    async def send_str(self, data: str) -> None:
-        await self._send({"type": "websocket.send", "text": data, "bytes": None})
+            yield data
